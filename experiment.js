@@ -251,6 +251,12 @@ function makeContextTrials(row, position, assignment, showInstructions = false) 
     ['event_and', eventAnd]
   ];
 
+  // Reserve enough space for all four sentences on every context screen.
+  // The guide is invisible; it keeps each narrative's box at one stable height.
+  const fullContext = segments.map(([, sentence], n) =>
+    `<p class="context-sentence${n === segments.length - 1 ? ' context-current' : ''}">${esc(sentence.trim())}</p>`
+  ).join('');
+
   return segments.map(([sentenceName], i) => {
     const visible = segments.slice(0, i + 1).map(([, sentence], n) =>
       `<p class="context-sentence${n === i ? ' context-current' : ''}">${esc(sentence.trim())}</p>`
@@ -275,7 +281,9 @@ function makeContextTrials(row, position, assignment, showInstructions = false) 
       stimulus:
         `<div class="reading-panel story-panel">` +
         `<div class="item-counter">${esc(itemLabel(row, position))}</div>` +
-        `<div class="reading-text context-body">${visible}</div>` +
+        `<div class="reading-text context-body">` +
+        `<div class="context-size-guide" aria-hidden="true">${fullContext}</div>` +
+        `<div class="context-visible">${visible}</div></div>` +
         instruction +
         `</div>`,
 
@@ -287,12 +295,9 @@ function makeContextTrials(row, position, assignment, showInstructions = false) 
         const current = body?.querySelector('.context-current');
 
         if (body && current) {
-          const sentenceBottom = current.offsetTop + current.offsetHeight;
-          const bodyBottom = body.offsetTop + body.clientHeight;
-
-          if (sentenceBottom > bodyBottom) {
-            body.scrollTop += sentenceBottom - bodyBottom + 12;
-          }
+          const overflow = current.getBoundingClientRect().bottom -
+            body.getBoundingClientRect().bottom;
+          if (overflow > 0) body.scrollTop += overflow + 12;
         }
       },
 

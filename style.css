@@ -30,7 +30,8 @@ html, body { background: var(--background); color: var(--ink); }
 }
 .story-panel {
   width: 100%;
-  height: min(75dvh, 560px);
+  height: auto;
+  max-height: min(75dvh, 560px);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -56,6 +57,11 @@ html, body { background: var(--background); color: var(--ink); }
   overflow-y: auto;
   overflow-x: hidden;
 }
+/* The full narrative sets a fixed height within each item; only the
+   visible cumulative sentences are drawn on top of the invisible guide. */
+.context-body { position: relative; }
+.context-size-guide { visibility: hidden; pointer-events: none; }
+.context-visible { position: absolute; top: 0; left: 0; right: 0; }
 .context-sentence { margin: 0 0 .65em; font-weight: 400; }
 .context-current { font-weight: 700; }
 .reading-instructions {
@@ -197,9 +203,9 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
    Each LI has the same 20px anchor width; space-between makes the centers
    equally spaced from 1 to 5 while leaving room for long endpoint captions. */
 .jspsych-survey-likert-opts {
-  width: 100% !important;
-  max-width: none !important;
-  margin: 32px 0 32px !important;
+  width: min(100%, 620px) !important;
+  max-width: 620px !important;
+  margin: 32px auto 32px !important;
   padding: 0 0 94px !important;
   display: flex !important;
   justify-content: space-between !important;
@@ -319,7 +325,7 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
 @media (max-width: 720px) {
   .jspsych-content { width: 95vw; }
   .reading-panel { padding: 18px 18px; }
-  .story-panel { height: min(78dvh, 560px); }
+  .story-panel { max-height: min(78dvh, 560px); }
   .word-panel { width: min(720px, calc(100vw - 36px)); height: auto; padding: 0; }
   body:has(#jspsych-survey-multi-choice-form) .jspsych-content,
   body:has(#jspsych-survey-likert-form) .jspsych-content { padding-top: 88px; padding-bottom: 64px; }
