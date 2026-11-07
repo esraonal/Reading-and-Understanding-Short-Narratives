@@ -560,7 +560,7 @@ async function launch() {
             on_start: () => { practiceAttempt += 1; }
           },
           ...makeContextTrials(practice.row, 1, assignment).map(annotatePracticeAttempt),
-          ...makeWordTrials(practice.row, 1, assignment).map(annotatePracticeAttempt),
+          ...makeContextTrials(practice.row, 1, assignment, true).map(annotatePracticeAttempt),
           ...makeQuestionTrials(practice.row, practice.options, 1, assignment).map(annotatePracticeAttempt)
         ];
       }
@@ -593,7 +593,7 @@ async function launch() {
       const position = i + 1;
       timeline.push({type:jsPsychHtmlKeyboardResponse, stimulus:'<div style="font-size:46px">+</div>',
         choices:'NO_KEYS', trial_duration:CONFIG.fixationMs, record_data:false});
-      timeline.push(...makeContextTrials(row, position, assignment));
+      timeline.push(...makeContextTrials(row, position, assignment, false));
       timeline.push(...makeWordTrials(row, position, assignment));
       if (CONFIG.includeQuestions) timeline.push(...makeQuestionTrials(row, qMap.get(row.item_id), position, assignment));
       if (CONFIG.breakAfterItems.includes(position) && position < NUM_ITEMS) {
