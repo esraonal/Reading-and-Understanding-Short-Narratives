@@ -151,13 +151,13 @@ body:has(#jspsych-survey-likert-form) .jspsych-content {
   padding-top: clamp(128px, 15vh, 170px);
   padding-bottom: 88px;
 }
-/* Questions: regular weight with compact, readable vertical spacing. */
+/* Questions: regular weight with generous vertical spacing. */
 .question-heading {
   font: 400 15px/1.4 var(--font);
   text-align: left;
   color: var(--muted);
-  margin: 0 0 16px;
-  padding: 0 0 10px;
+  margin: 0 0 22px;
+  padding: 0 0 15px;
   border-bottom: 1px solid #eeeeee;
 }
 .question-heading span { font: inherit; color: var(--muted); margin-left: 10px; }
@@ -175,31 +175,31 @@ body:has(#jspsych-survey-likert-form) .jspsych-content {
   border-bottom: 1px solid #eeeeee;
   border-radius: 0;
   text-align: left;
-  padding: 12px 0 16px !important;
-  margin: 0 0 12px !important;
+  padding: 22px 0 30px !important;
+  margin: 0 0 24px !important;
   font-family: var(--font) !important;
 }
 .jspsych-survey-multi-choice-text, .jspsych-survey-likert-statement,
 .jspsych-survey-multi-choice-question p, .jspsych-survey-likert-question p {
   font: 400 18px/1.45 var(--font) !important;
   color: var(--ink);
-  margin: 0 0 12px !important;
+  margin: 0 0 17px !important;
 }
 .jspsych-survey-multi-choice-option {
-  margin: 8px 0 8px 4px !important;
+  margin: 12px 0 12px 4px !important;
   font: 400 17px/1.4 var(--font) !important;
 }
 .jspsych-survey-multi-choice-option label,
 .jspsych-survey-likert-opts li label { font-weight: 400 !important; cursor: pointer; }
 input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-align: middle; cursor: pointer; }
-/* Q5 agreement scale: five equally spaced anchors in a compact 620px row.
+/* Q5 agreement scale: five equally spaced anchor points across the form.
    The endpoint captions sit below their numerals (no dashes or separators).
    Each LI has the same 20px anchor width; space-between makes the centers
    equally spaced from 1 to 5 while leaving room for long endpoint captions. */
 .jspsych-survey-likert-opts {
-  width: min(100%, 620px) !important;
-  max-width: 620px !important;
-  margin: 24px auto 28px !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 32px 0 32px !important;
   padding: 0 0 94px !important;
   display: flex !important;
   justify-content: space-between !important;
