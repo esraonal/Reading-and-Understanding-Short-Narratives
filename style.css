@@ -75,11 +75,10 @@ kbd {
   padding: 1px 5px;
 }
 
-/* Self-paced reading: a single 720px-wide region centered on the screen.
-   All critical continuations begin at the same left edge, regardless of
-   sentence length; there is no visible border or instructional text.
-   Word slots reserve each word's true Arial width so long words fit; the
-   placeholder is always EXACTLY three dashes. */
+/* Self-paced reading: the critical continuation is centered on the screen.
+   It is slightly larger than the context (26px versus 22px), with no
+   visible border or instructions. Word slots reserve each word's true
+   Arial width, so words never shift during successive reveals. */
 .word-panel {
   width: min(720px, calc(100vw - 64px));
   max-width: 720px;
@@ -92,19 +91,31 @@ kbd {
   border-radius: 0;
   box-shadow: none;
   background: transparent;
-  text-align: left;
+  text-align: center;
 }
-.word-panel .word-body { flex: 0 0 auto; overflow: visible; }
+/* Center vertically in jsPsych's viewport and horizontally inside the panel. */
+body:has(.word-panel) .jspsych-content-wrapper {
+  align-items: center !important;
+  justify-content: center !important;
+}
+body:has(.word-panel) .jspsych-content { margin: auto !important; }
+.word-panel .word-body {
+  flex: 0 0 auto;
+  overflow: visible;
+  font-size: 26px;
+  line-height: 1.5;
+  text-align: center;
+}
 .moving-window {
   display: flex;
   flex-flow: row wrap;
   align-content: flex-start;
-  justify-content: flex-start;
+  justify-content: center;
   column-gap: 22px; /* Same distance between all reserved word slots. */
   row-gap: .65em;
   font: inherit;
   line-height: inherit;
-  text-align: left;
+  text-align: center;
 }
 .mw-slot {
   /* Both layers occupy the same grid cell. Even the widest real word keeps
@@ -170,13 +181,13 @@ body:has(#jspsych-survey-likert-form) .jspsych-content {
 }
 .jspsych-survey-multi-choice-text, .jspsych-survey-likert-statement,
 .jspsych-survey-multi-choice-question p, .jspsych-survey-likert-question p {
-  font: 400 20px/1.45 var(--font) !important;
+  font: 400 18px/1.45 var(--font) !important;
   color: var(--ink);
   margin: 0 0 17px !important;
 }
 .jspsych-survey-multi-choice-option {
   margin: 12px 0 12px 4px !important;
-  font: 400 18px/1.4 var(--font) !important;
+  font: 400 17px/1.4 var(--font) !important;
 }
 .jspsych-survey-multi-choice-option label,
 .jspsych-survey-likert-opts li label { font-weight: 400 !important; cursor: pointer; }
@@ -189,7 +200,7 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
   width: 100% !important;
   max-width: none !important;
   margin: 32px 0 32px !important;
-  padding: 0 0 72px !important;
+  padding: 0 0 94px !important;
   display: flex !important;
   justify-content: space-between !important;
   align-items: flex-start !important;
@@ -240,7 +251,7 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
 .likert-endpoint {
   position: absolute;
   display: block;
-  top: 32px;
+  top: 50px; /* Keep the agreement endpoints clearly below numerals 1 and 5. */
   font: 400 16px/1.35 var(--font);
   color: var(--ink);
   width: 145px;
@@ -319,8 +330,8 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
   #jspsych-html-button-response-btngroup { column-gap: 22px; row-gap: 22px; }
   #jspsych-html-button-response-btngroup .jspsych-btn { min-width: min(75vw, 260px); }
   .jspsych-survey-multi-choice-text, .jspsych-survey-likert-statement,
-  .jspsych-survey-multi-choice-question p, .jspsych-survey-likert-question p { font-size: 19px !important; }
+  .jspsych-survey-multi-choice-question p, .jspsych-survey-likert-question p { font-size: 17px !important; }
   .jspsych-survey-multi-choice-option,
   .jspsych-survey-likert-opts li,
-  .jspsych-survey-likert-opts li label { font-size: 17px !important; }
+  .jspsych-survey-likert-opts li label { font-size: 16px !important; }
 }
