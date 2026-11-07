@@ -75,17 +75,25 @@ kbd {
   padding: 1px 5px;
 }
 
-/* Critical continuation: compact, centered and the SAME Arial 22 px. */
+/* Self-paced reading: identical left edge on every item, even if the
+   critical continuation has only a few words. Match the LEFT TEXT EDGE of
+   the context panel (960px panel minus 32px of padding on each side).
+   The region itself is invisible: no border, heading, or extra wording. */
 .word-panel {
-  width: max-content;
-  max-width: min(94vw, 960px);
-  height: auto;
+  width: calc(100% - 64px);
+  max-width: 896px;
+  min-width: 0;
   min-height: 0;
-  padding: 22px 26px;
+  height: auto;
+  margin-inline: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  text-align: left;
 }
 .word-panel .word-body { flex: 0 0 auto; overflow: visible; }
-.word-panel .item-counter { margin-bottom: 12px; }
-.word-panel .reading-instructions { margin-top: 16px; }
 .moving-window {
   display: flex;
   flex-flow: row wrap;
@@ -114,13 +122,29 @@ kbd {
 .mw-current .mw-mask { visibility: hidden; }
 .mw-current .mw-real { visibility: visible; }
 
-/* Questions: simple text, no cards, labels or decorations. */
+/* A four-question form can be taller than the screen. The default
+   vertically centered jsPsych content risks pushing its TOP above the
+   viewport. Anchor question pages to the top and allow normal scrolling. */
+body:has(#jspsych-survey-multi-choice-form) .jspsych-content-wrapper,
+body:has(#jspsych-survey-likert-form) .jspsych-content-wrapper {
+  margin: 0 auto !important;
+  flex: 0 0 auto !important;
+  align-items: flex-start !important;
+  width: 100%;
+}
+body:has(#jspsych-survey-multi-choice-form) .jspsych-content,
+body:has(#jspsych-survey-likert-form) .jspsych-content {
+  margin: 0 auto !important;
+  padding-top: clamp(64px, 9vh, 100px);
+  padding-bottom: 88px;
+}
+/* Questions: regular weight with generous vertical spacing. */
 .question-heading {
   font: 400 15px/1.4 var(--font);
   text-align: left;
   color: var(--muted);
-  margin: 0 0 12px;
-  padding: 0 0 10px;
+  margin: 0 0 22px;
+  padding: 0 0 15px;
   border-bottom: 1px solid #eeeeee;
 }
 .question-heading span { font: inherit; color: var(--muted); margin-left: 10px; }
@@ -138,18 +162,18 @@ kbd {
   border-bottom: 1px solid #eeeeee;
   border-radius: 0;
   text-align: left;
-  padding: 14px 0 18px !important;
-  margin: 0 0 10px !important;
+  padding: 22px 0 30px !important;
+  margin: 0 0 24px !important;
   font-family: var(--font) !important;
 }
 .jspsych-survey-multi-choice-text, .jspsych-survey-likert-statement,
 .jspsych-survey-multi-choice-question p, .jspsych-survey-likert-question p {
   font: 400 20px/1.45 var(--font) !important;
   color: var(--ink);
-  margin: 0 0 10px !important;
+  margin: 0 0 17px !important;
 }
 .jspsych-survey-multi-choice-option {
-  margin: 7px 0 7px 3px !important;
+  margin: 12px 0 12px 4px !important;
   font: 400 18px/1.4 var(--font) !important;
 }
 .jspsych-survey-multi-choice-option label,
@@ -157,11 +181,38 @@ kbd {
 input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-align: middle; cursor: pointer; }
 .jspsych-survey-likert-opts {
   font: 400 18px/1.4 var(--font) !important;
-  margin: 15px auto 10px !important;
+  margin: 24px auto 24px !important;
 }
 .jspsych-survey-likert-opts li,
 .jspsych-survey-likert-opts li label { font: 400 18px/1.4 var(--font) !important; }
 .jspsych-survey-likert-opts input[type=radio] { transform: scale(1.08); }
+
+/* End-of-practice choice: make the two buttons clearly separate.
+   This applies only to the practice decision (the only HTML button trial). */
+#jspsych-html-button-response-btngroup {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  column-gap: 40px;
+  row-gap: 20px;
+  margin-top: 34px;
+}
+#jspsych-html-button-response-btngroup .jspsych-html-button-response-button {
+  margin: 0 !important;
+  display: block !important;
+}
+#jspsych-html-button-response-btngroup .jspsych-btn {
+  min-width: 214px;
+  margin: 0 !important;
+}
+.practice-choice {
+  max-width: 690px;
+  margin: 0 auto;
+  font: 400 20px/1.5 var(--font);
+  text-align: center;
+}
+.practice-choice p { margin: 0 0 12px; }
 
 /* Plain, readable buttons with adequate contrast and a generous click target. */
 .jspsych-btn, button.jspsych-btn, input.jspsych-btn {
@@ -190,10 +241,14 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
   .jspsych-content { width: 95vw; }
   .reading-panel { padding: 18px 18px; }
   .story-panel { height: min(78dvh, 560px); }
-  .word-panel { width: max-content; max-width: 95vw; height: auto; padding: 18px 18px; }
+  .word-panel { width: calc(100% - 36px); max-width: none; height: auto; padding: 0; }
+  body:has(#jspsych-survey-multi-choice-form) .jspsych-content,
+  body:has(#jspsych-survey-likert-form) .jspsych-content { padding-top: 52px; padding-bottom: 64px; }
   .reading-text { font-size: 22px; line-height: 1.5; }
   .reading-instructions { font-size: 14px; }
   .question-heading span { display: block; margin: 4px 0 0; }
+  #jspsych-html-button-response-btngroup { column-gap: 22px; row-gap: 22px; }
+  #jspsych-html-button-response-btngroup .jspsych-btn { min-width: min(75vw, 260px); }
   .jspsych-survey-multi-choice-text, .jspsych-survey-likert-statement,
   .jspsych-survey-multi-choice-question p, .jspsych-survey-likert-question p { font-size: 19px !important; }
   .jspsych-survey-multi-choice-option,

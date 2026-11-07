@@ -295,10 +295,10 @@ function movingWindowHTML(textWords, currentIndex, position, row) {
       `<span class="mw-real" aria-hidden="${!active}">${esc(word)}</span>` +
       `<span class="mw-mask" aria-hidden="true">${maskedWord(word)}</span></span>`;
   });
-  // Compact centered panel, just wide/tall enough for this continuation.
-  return `<div class="reading-panel story-panel word-panel"><div class="item-counter">${esc(itemLabel(row, position))}</div>` +
-    `<div class="reading-text word-body"><div class="moving-window" aria-label="Word-by-word critical continuation">${spans.join('')}</div></div>` +
-    '<div class="reading-instructions">Press <kbd>Space</kbd> to read the next word</div></div>';
+  // During self-paced reading, show only the word and stationary dashes.
+  // Instructions are provided beforehand, not repeated in this timed region.
+  return `<div class="reading-panel word-panel"><div class="reading-text word-body">` +
+    `<div class="moving-window" aria-label="Word-by-word reading">${spans.join('')}</div></div></div>`;
 }
 
 function makeWordTrials(row, position, assignment) {
@@ -462,7 +462,7 @@ async function launch() {
     const ordered = jsPsych.randomization.shuffle(selected);
     const timeline = [];
     timeline.push(makeTextTrial(
-      `The main task has 36 short stories. ${NUM_PRACTICE ? 'First, you will try one practice story. You can repeat it as many times as you like before starting. ' : ''}` +
+      `The main task has 36 short stories. ${NUM_PRACTICE ? 'First, you must complete one practice story. Afterward, you may repeat it once or start the experiment. ' : ''}` +
       'Press <kbd>Space</kbd> to reveal each new sentence. The newest sentence is bold, while earlier sentences stay visible. ' +
       'After the word <em>and</em>, the story continues one word at a time. Dashes show the other word positions without moving. ' +
       'Press <kbd>Space</kbd> to advance through the words. Answer all five questions after each story; the final rating uses a 1–5 scale.'
@@ -483,40 +483,42 @@ async function launch() {
           }
         };
       }
-      const repeatedPractice = [
-        {
-          type:jsPsychHtmlKeyboardResponse,
-          stimulus:'<div style="font-size:46px">+</div>',
-          choices:'NO_KEYS', trial_duration:CONFIG.fixationMs,
-          record_data:false,
-          on_start: () => { practiceAttempt += 1; }
-        },
-        ...makeContextTrials(practice.row, 1, assignment).map(annotatePracticeAttempt),
-        ...makeWordTrials(practice.row, 1, assignment).map(annotatePracticeAttempt),
-        ...makeQuestionTrials(practice.row, practice.options, 1, assignment).map(annotatePracticeAttempt),
-        {
-          type:jsPsychHtmlButtonResponse,
-          stimulus:'<div class="practice-choice"><p>Practice complete.</p>' +
-            '<p>Would you like to try the same practice story again, or start the experiment?</p></div>',
-          choices:['Try practice again', 'Start experiment'],
-          data:{task:'practice', is_practice:true, phase:'practice_decision', item_id:practice.row.item_id},
-          on_start:function(currentTrial) {
-            currentTrial.data = {...(currentTrial.data || {}), practice_attempt:practiceAttempt};
-          }
-        }
-      ];
+      // Everyone completes one practice round. Only after finishing its five
+      // required questions can they choose to repeat the same story ONCE.
+      // The repeat uses exactly the same response procedure and is never
+      // counted among the 36 experimental narratives.
+      function buildPracticeRound() {
+        return [
+          {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: '<div style="font-size:46px">+</div>',
+            choices: 'NO_KEYS', trial_duration: CONFIG.fixationMs,
+            record_data: false,
+            on_start: () => { practiceAttempt += 1; }
+          },
+          ...makeContextTrials(practice.row, 1, assignment).map(annotatePracticeAttempt),
+          ...makeWordTrials(practice.row, 1, assignment).map(annotatePracticeAttempt),
+          ...makeQuestionTrials(practice.row, practice.options, 1, assignment).map(annotatePracticeAttempt)
+        ];
+      }
+      let repeatPractice = false;
+      timeline.push(...buildPracticeRound());
       timeline.push({
-        timeline:repeatedPractice,
-        // Response 0 repeats; response 1 moves to the main experiment.
-        // Assignment to a counterbalancing list is performed only ONCE before
-        // this loop, even if the participant repeats practice many times.
-        loop_function:function(data) {
-          const events = data.values();
-          const decision = events[events.length - 1];
-          if (!decision || decision.phase !== 'practice_decision')
-            throw new Error('Practice choice was not recorded.');
-          return decision.response === 0;
+        type: jsPsychHtmlButtonResponse,
+        stimulus: '<div class="practice-choice"><p>Practice complete.</p>' +
+          '<p>You can repeat this practice story once, or start the experiment.</p></div>',
+        choices: ['Repeat practice once', 'Start experiment'],
+        data: {task:'practice', is_practice:true, phase:'practice_decision', item_id:practice.row.item_id},
+        on_start: function(currentTrial) {
+          currentTrial.data = {...(currentTrial.data || {}), practice_attempt: practiceAttempt};
+        },
+        on_finish: function(data) {
+          repeatPractice = data.response === 0;
         }
+      });
+      timeline.push({
+        timeline: buildPracticeRound(),
+        conditional_function: () => repeatPractice
       });
       timeline.push(makeTextTrial(
         'The main experiment will now begin. You will read 36 new stories in the same format. ' +

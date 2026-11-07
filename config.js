@@ -9,8 +9,8 @@ window.EXPERIMENT_CONFIG = {
   // Only the continuation after "and" is word-by-word; other slots show dashes.
   fixationMs: 350,
 
-  // One reusable practice narrative before the 36 experimental stories.
-  // 1 = show practice (repeatable); 0 = skip practice.
+  // One required practice narrative before the 36 experimental stories.
+  // After the first round, participants may repeat it once (optional).
   practiceItems: 1,
   breakAfterItems: [12, 24],
 

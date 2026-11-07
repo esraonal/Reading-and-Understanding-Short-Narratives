@@ -42,15 +42,16 @@ let numTests=0;
 for(let list=0;list<12;list++) {
   const {timeline,util}=await buildList(list);
   const pTrials=timeline.filter(t=>t.data?.task==='narrative' && t.data?.phase==='word' && t.data?.region==='predicate');
-  const loopNodes=timeline.filter(t=>typeof t.loop_function==='function');
-  assert.equal(loopNodes.length,1,'Expected exactly one repeatable practice loop');
-  const practiceLoop=loopNodes[0];
-  const practiceTrials=practiceLoop.timeline;
-  const practicePredicates=practiceTrials.filter(t=>t.data?.task==='practice' && t.data?.phase==='word' && t.data?.region==='predicate');
-  const practiceMCQs=practiceTrials.filter(t=>t.data?.task==='practice' && t.data?.question_set==='multiple_choice');
-  const practiceLikerts=practiceTrials.filter(t=>t.data?.task==='practice' && t.data?.question_set==='plausibility');
-  const practiceContext=practiceTrials.filter(t=>t.data?.task==='practice' && t.data?.phase==='sentence');
-  const practiceDecision=practiceTrials.at(-1);
+  const optionalNodes = timeline.filter(t => typeof t.conditional_function === 'function');
+  assert.equal(optionalNodes.length, 1, 'Expected exactly one optional second practice round');
+  const optionalPractice = optionalNodes[0];
+  const practiceDecision = timeline.find(t => t.data?.phase === 'practice_decision');
+  const practiceTrials = timeline.filter(t => t.data?.task === 'practice' && t.data?.phase !== 'practice_decision');
+  const repeatedTrials = optionalPractice.timeline;
+  const practicePredicates = practiceTrials.filter(t=>t.data?.phase==='word' && t.data?.region==='predicate');
+  const practiceMCQs = practiceTrials.filter(t=>t.data?.question_set==='multiple_choice');
+  const practiceLikerts = practiceTrials.filter(t=>t.data?.question_set==='plausibility');
+  const practiceContext = practiceTrials.filter(t=>t.data?.phase==='sentence');
   const questionLookup=new Map(util.parseCSV(csvFiles['data/questions.csv']).map(q=>[q.item_id,q]));
   const mcqs=timeline.filter(t=>t.data?.task==='narrative' && t.data?.question_set==='multiple_choice');
   const likerts=timeline.filter(t=>t.data?.task==='narrative' && t.data?.question_set==='plausibility');
@@ -69,21 +70,34 @@ for(let list=0;list<12;list++) {
   assert.ok(practiceMCQs.every(t=>t.questions[1].prompt.includes(' looked ')));
   assert.ok(practicePredicates.every(t=>t.data.item_num===null && t.data.condition_num===null));
   assert.equal(practiceDecision.data.phase,'practice_decision');
-  assert.deepEqual(Array.from(practiceDecision.choices), ['Try practice again','Start experiment']);
-  assert.equal(practiceLoop.loop_function({values:()=>[{phase:'practice_decision',response:0}]}),true);
-  assert.equal(practiceLoop.loop_function({values:()=>[{phase:'practice_decision',response:1}]}),false);
-  // Repeating the tutorial adds the attempt number to every recorded practice event.
-  const fixation=practiceTrials[0];
-  fixation.on_start(fixation);
-  const fakePracticeTrial={data:{...practicePredicates[0].data}};
-  practicePredicates[0].on_start(fakePracticeTrial);
-  assert.equal(fakePracticeTrial.data.practice_attempt,1);
-  fixation.on_start(fixation);
-  practicePredicates[0].on_start(fakePracticeTrial);
-  assert.equal(fakePracticeTrial.data.practice_attempt,2);
-  const fakeDecision={data:{...practiceDecision.data}};
-  practiceDecision.on_start(fakeDecision);
-  assert.equal(fakeDecision.data.practice_attempt,2);
+  assert.deepEqual(Array.from(practiceDecision.choices), ['Repeat practice once','Start experiment']);
+  assert.equal(repeatedTrials.filter(t=>t.data?.phase==='word' && t.data?.region==='predicate').length,1);
+  assert.equal(repeatedTrials.filter(t=>t.data?.phase==='sentence').length,4);
+  assert.equal(repeatedTrials.filter(t=>t.data?.question_set==='multiple_choice').length,1);
+  assert.equal(repeatedTrials.filter(t=>t.data?.question_set==='plausibility').length,1);
+  assert.equal(repeatedTrials.filter(t=>t.data?.phase==='practice_decision').length,0,
+    'The second practice must finish without another repeat-choice screen.');
+  // First practice is mandatory, then the decision controls one OPTIONAL repeat.
+  assert.equal(optionalPractice.conditional_function(),false);
+  const firstFixation=timeline.find(t=>t.data===undefined && typeof t.on_start==='function' && t.stimulus?.includes('+'));
+  assert.ok(firstFixation, 'Missing mandatory practice fixation');
+  firstFixation.on_start(firstFixation);
+  const firstWord={data:{...practicePredicates[0].data}};
+  practicePredicates[0].on_start(firstWord);
+  assert.equal(firstWord.data.practice_attempt,1);
+  const decisionTrial={data:{...practiceDecision.data}};
+  practiceDecision.on_start(decisionTrial);
+  assert.equal(decisionTrial.data.practice_attempt,1);
+  practiceDecision.on_finish({response:0});
+  assert.equal(optionalPractice.conditional_function(),true);
+  const repeatFixation=repeatedTrials[0];
+  repeatFixation.on_start(repeatFixation);
+  const repeatWordTrial=repeatedTrials.find(t=>t.data?.phase==='word' && t.data?.region==='predicate');
+  const secondWord={data:{...repeatWordTrial.data}};
+  repeatWordTrial.on_start(secondWord);
+  assert.equal(secondWord.data.practice_attempt,2);
+  practiceDecision.on_finish({response:1});
+  assert.equal(optionalPractice.conditional_function(),false);
   assert.equal(mcqs.length,36);
   assert.equal(likerts.length,36);
   assert.equal(sentences.length,144);
@@ -154,6 +168,11 @@ for(let list=0;list<12;list++) {
   assert.ok(firstItemWords.every(t=>t.data.word.toLowerCase()!=='and'));
   assert.equal(firstItemWords[0].data.word_index,1);
   const slotsOf=h=>Array.from(h.matchAll(/class="mw-slot mw-(?:current|masked)"[^>]*><span class="mw-real" aria-hidden="(?:true|false)">([^<]+)<\/span><span class="mw-mask" aria-hidden="true">([^<]+)<\/span><\/span>/g), m=>[m[1],m[2]]);
+  // Distraction-free word screen: no story number or instructional writing.
+  assert.ok(firstItemWords.every(t=>!t.stimulus.includes('item-counter')));
+  assert.ok(firstItemWords.every(t=>!t.stimulus.includes('reading-instructions')));
+  assert.ok(firstItemWords.every(t=>!t.stimulus.includes('Press <kbd>Space</kbd>')));
+  assert.ok(firstItemWords.every(t=>t.stimulus.includes('moving-window')));
   const firstSlots=slotsOf(firstItemWords[0].stimulus);
   assert.equal(firstSlots.length,firstItemWords.length);
   for(const t of firstItemWords) {
@@ -163,9 +182,9 @@ for(let list=0;list<12;list++) {
   const eightWords=timeline.filter(t=>t.data?.phase==='word' && t.data.item_num===8);
   assert.deepEqual(Array.from(eightWords.slice(0,2),t=>t.data.word),['Jack’s','son']);
   assert.deepEqual(Array.from(eightWords.slice(0,2),t=>t.data.region),['target','target']);
-  console.log(`PASS list ${list}: repeatable practice loop + 36 unique experimental items, 12 cells x 3 each`);
+  console.log(`PASS list ${list}: one required practice + at most one optional repeat + 36 unique experimental items, 12 cells x 3 each`);
   numTests++;
 }
 assert.equal(allByItem.size,36);
 for(const [id,cells] of allByItem) assert.equal(cells.size,12,`incomplete rotations for ${id}`);
-console.log(`PASS ${numTests} counterbalanced lists; one repeatable practice story is separate; each experimental narrative rotates through all 12 cells.`);
+console.log(`PASS ${numTests} counterbalanced lists; required practice with optional second attempt is separate; each experimental narrative rotates through all 12 cells.`);

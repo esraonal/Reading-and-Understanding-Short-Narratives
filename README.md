@@ -1,6 +1,6 @@
 # Narratives: 12-list counterbalanced jsPsych experiment (compact critical window, shuffled answers)
 
-This study uses **36 narratives** and **12 predicate × access combinations** (looks / sounds / seems × both / visual-only / auditory-only / neither). Every participant sees **each narrative once**. The 36 trials are distributed so each participant encounters **exactly three narratives in each of the 12 combinations**. There are **no fillers**. The study starts with **one practice story that participants may repeat as often as they want** before starting the 36 experimental items.
+This study uses **36 narratives** and **12 predicate × access combinations** (looks / sounds / seems × both / visual-only / auditory-only / neither). Every participant sees **each narrative once**. The 36 trials are distributed so each participant encounters **exactly three narratives in each of the 12 combinations**. There are **no fillers**. The study starts with **one required practice story, which participants may repeat once if they choose** before starting the 36 experimental items.
 
 **The counterbalancing list is assigned between participants; predicate and access vary within a participant across narratives.** Thus the experimental factors are within-participant, while each narrative is presented in only one of its 12 forms per participant. This should be modeled accordingly in analysis, with participant and item variability considered.
 
@@ -34,10 +34,10 @@ The tests verify all 12 lists: 36 unique experimental narratives per list (plus 
 
 ## 3. Participant experience
 
-1. A brief instruction screen followed by **one practice story** (rocket landing). It uses the same four cumulative context sentences, word-by-word continuation after **and**, four required multiple-choice questions with shuffled options, and a required 1–5 plausibility question. After answering all five questions, participants click **Try practice again** (which repeats the same story and questions) or **Start experiment**. Repetition is unlimited. Then an instruction screen announces the 36 experimental items. Practice is **not** part of the 36 items or the 12-list counterbalancing.
+1. A brief instruction screen followed by **one practice story** (rocket landing). It uses the same four cumulative context sentences, word-by-word continuation after **and**, four required multiple-choice questions with shuffled options, and a required 1–5 plausibility question. After completing the five questions, participants choose **Repeat practice once** or **Start experiment**. If they repeat it, the story and questions appear exactly one more time, then the main experiment begins automatically after a short instruction screen. The repeat is optional, but the first practice round is mandatory. Practice is **not** part of the 36 items or the 12-list counterbalancing.
 2. A fixation cross before each main narrative.
 3. Four context sentences appear **cumulatively from top to bottom in one fixed window**. The newest sentence is **bold**, and earlier sentences remain visible in regular type. The last context display ends with **and**.
-4. After another Space press, the context disappears, and the critical continuation **after “and”** starts word-by-word self-paced reading in the **same Arial font (22 px)**, within a smaller, centered box sized to the continuation instead of the large context box. The other word positions are shown as spaced, stationary dashes; no words shift as a word is revealed. Word-level RTs are recorded after “and,” including target, predicate, modifier, adjective, and spillover.
+4. After another Space press, the context disappears, and the critical continuation **after “and”** starts word-by-word self-paced reading in the **same Arial font (22 px)**, in a compact, centered display with no box border, trial number, or on-screen prompt. The other word positions are shown as spaced, stationary dashes; no words shift as a word is revealed. Word-level RTs are recorded after “and,” including target, predicate, modifier, adjective, and spillover.
 5. Four numbered, **required** multiple-choice questions appear: location, impression source, perceptual access, and reader activity. The impression question always uses the item's assigned predicate (*looked/sounded/seemed*). Questions and options use smaller regular-weight type. Answer choices are **not numbered** and are **independently shuffled for each participant and question**; stored answer keys still point to the original source-option indices.
 6. The fifth, **required** question is the emotional plausibility rating on a **1–5** scale. The ordered rating points are intentionally **not shuffled**. The source's 18 matching and 18 opposite-adjective questions are preserved.
 7. Breaks appear after items 12 and 24; all 36 narratives are presented, in randomized order.
@@ -46,7 +46,7 @@ The tests verify all 12 lists: 36 unique experimental narratives per list (plus 
 
 This package is configured for **DataPipe mode** using the experiment ID in `config.js`, with GitHub Pages intended for hosting and an institution-approved Google Drive destination intended for saving responses. It has not been live-tested against the account. Sona handles lab appointments/credit, not data collection. Keep the response files separate from Sona identities and verify your university's research-data approval before running participants. To test with a local downloadable CSV instead, temporarily set `mode: 'pilot'` in `config.js`.
 
-Practice rows are tagged `task=practice`, `is_practice=true`, and `practice_attempt=1,2,...`, with ID `practice_rocket`. Repeated practice is kept separate from the 36 experimental narratives. All experimental trials are tagged `task=narrative`. Exclude `task=practice` from the primary analyses. The included `tools/check_counts.py` excludes practice. Set `practiceItems: 0` in `config.js` to disable practice entirely (default: `1`).
+Practice rows are tagged `task=practice`, `is_practice=true`, and `practice_attempt=1` or `2`, with ID `practice_rocket`. Repeated practice is kept separate from the 36 experimental narratives. All experimental trials are tagged `task=narrative`. Exclude `task=practice` from the primary analyses. The included `tools/check_counts.py` excludes practice. Set `practiceItems: 0` in `config.js` to disable practice entirely (default: `1`).
 
 Before collecting study data, use a shared 12-list assignment ledger or approved server-side allocator across the lab computers; test automatic or operator-managed saving to your institution-approved secure location; and define when, if permitted, data will be deposited in OSF. Do not rely on independent random assignment in each browser to balance lists. Save no names, Sona identifiers, or other directly identifying data in the behavioral CSV unless covered by your approved protocol.
 
@@ -93,9 +93,21 @@ The study uses a white background and black Arial text, without shadows or decor
 
 ## Tutorial scenarios
 
-The single tutorial narrative is defined in `practice.js`, not in the experimental CSVs. It illustrates visual-only × looks. Participants can replay it any number of times before beginning the main experiment. Each replay includes all five required questions. The multiple-choice options are shuffled when the experiment is built. Practice data are marked with `practice_attempt` and excluded from analyses of the 36 experimental items. DataPipe assigns the counterbalancing list once per participant, not once per practice attempt.
+The single tutorial narrative is defined in `practice.js`, not in the experimental CSVs. It illustrates visual-only × looks. Participants must complete it once and may repeat it exactly one more time before beginning the main experiment. The optional repeat includes all five required questions and does not offer a further repeat. The multiple-choice options are shuffled when the experiment is built. Practice data are marked with `practice_attempt` and excluded from analyses of the 36 experimental items. DataPipe assigns the counterbalancing list once per participant, not once per practice attempt.
 
 
-### Repeatable tutorial implementation
+### One required practice with an optional repeat
 
-The project loads the jsPsych `html-button-response` plugin (version 2.1.0) for the two practice-choice buttons. GitHub Pages must be able to load the plugin CDN, as with the other jsPsych plugins. After selecting **Start experiment**, practice cannot be replayed.
+The project loads the jsPsych `html-button-response` plugin (version 2.1.0) for the two practice-choice buttons. GitHub Pages must be able to load the plugin CDN, as with the other jsPsych plugins. After selecting **Start experiment**, practice cannot be replayed; participants who choose **Repeat practice once** automatically move on after the second completion.
+
+## Distraction-free self-paced reading screen
+
+The timed continuation now contains **only the currently visible word and the stationary dashed word positions**. The story counter, instruction footer ("Press Space..."), panel outline, and extra padding are removed **only on the self-paced reading screen**. Practice and opening instructions still explain Space before timing begins. The narrative context remains in its fixed, cumulative box, and all word RTs, list counterbalancing, questions, mandatory rocket practice with an optional repeat, and DataPipe settings are unchanged.
+
+
+## Latest presentation refinements
+
+- All critical continuations start at the **same left-aligned text edge**, including short and long items. The reading area remains unbordered and visually minimal. Word slots remain fixed throughout a sentence.
+- Question screens are **top-anchored** with ample top padding and page scrolling when necessary; the first question should not be cut off on shorter monitors.
+- More vertical space separates question prompts, choices, and individual questions. Fonts remain Arial and regular weight.
+- Only the tutorial-choice logic and button spacing changed in this update; word timing, list assignment, and DataPipe settings are unchanged.
