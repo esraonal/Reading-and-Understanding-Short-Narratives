@@ -470,10 +470,16 @@ async function launch() {
     const ordered = jsPsych.randomization.shuffle(selected);
     const timeline = [];
     timeline.push(makeTextTrial(
-      `The main task has 36 short narratives. ${NUM_PRACTICE ? 'First, you must complete one practice narrative. Afterward, you may repeat the practice narrative or start the experiment. ' : ''}` +
-      'Press <kbd>Space</kbd> to reveal each new sentence. The newest sentence is bold, while earlier sentences stay visible. ' +
-      'After the word <em>and</em>, the narrative continues one word at a time. Dashes show the other word positions without moving. ' +
-      'Press <kbd>Space</kbd> to advance through the words. Answer all five questions after each narrative; the final statement uses a 1–5 agreement scale.'
+      `In this experiment, you will read 36 short narratives. ` +
+      (NUM_PRACTICE
+        ? 'Before beginning the main task, you will complete one required practice narrative. Afterward, you can choose to repeat the practice or begin the experiment. '
+        : '') +
+      '<p>Each narrative consists of five sentences. Press <kbd>Space</kbd> to reveal each new sentence. ' +
+      'The newest sentence will appear in bold, while the previous sentences remain visible.</p>' +
+      '<p><strong>After the fourth sentence, you will read the final sentence one word at a time.</strong> ' +
+      'The previous sentences will disappear, and three dashes (---) will represent each hidden word. ' +
+      'Press <kbd>Space</kbd> to reveal each word in sequence.</p>' +
+      '<p>After each narrative, you will answer five questions.</p>'
     ));
     if (NUM_PRACTICE > 0) {
       const practice = PRACTICE_STORIES[0];
@@ -529,8 +535,9 @@ async function launch() {
         conditional_function: () => repeatPractice
       });
       timeline.push(makeTextTrial(
-        'The main experiment will now begin. You will read 36 new narratives in the same format. ' +
-        'Each narrative appears once, and the order is randomized. Please read naturally and answer every question.'
+        'The main experiment will now begin. You will read 36 new narratives in the same format. ' +        
+        'Please read each narrative naturally and at a comfortable pace. ' +
+        'Pay attention to what you read, as you will answer questions afterward.'
       ));
     }
     for (const [i, row] of ordered.entries()) {
