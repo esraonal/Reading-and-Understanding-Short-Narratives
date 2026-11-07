@@ -88,8 +88,8 @@ kbd {
    visible border or instructions. Word slots reserve each word's true
    Arial width, so words never shift during successive reveals. */
 .word-panel {
-  width: min(720px, calc(100vw - 64px));
-  max-width: 720px;
+  width: min(1300px, calc(100vw - 64px));
+  max-width: 1300px;
   min-width: 0;
   min-height: 0;
   height: auto;
