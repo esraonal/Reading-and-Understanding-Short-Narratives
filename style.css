@@ -60,6 +60,8 @@ html, body { background: var(--background); color: var(--ink); }
 /* The full narrative sets a fixed height within each item; only the
    visible cumulative sentences are drawn on top of the invisible guide. */
 .context-body { position: relative; }
+/* Match the narrative font to the word-by-word text without altering instructions. */
+.story-panel .context-body { font-size: 28px; }
 .context-size-guide { visibility: hidden; pointer-events: none; }
 .context-visible { position: absolute; top: 0; left: 0; right: 0; }
 .context-sentence { margin: 0 0 .65em; font-weight: 400; }
@@ -82,7 +84,7 @@ kbd {
 }
 
 /* Self-paced reading: the critical continuation is centered on the screen.
-   It is slightly larger than the context (26px versus 22px), with no
+   It matches the narrative at 28px, with no
    visible border or instructions. Word slots reserve each word's true
    Arial width, so words never shift during successive reveals. */
 .word-panel {
@@ -108,7 +110,7 @@ body:has(.word-panel) .jspsych-content { margin: auto !important; }
 .word-panel .word-body {
   flex: 0 0 auto;
   overflow: visible;
-  font-size: 26px;
+  font-size: 28px;
   line-height: 1.5;
   text-align: center;
 }
@@ -203,8 +205,8 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
    Each LI has the same 20px anchor width; space-between makes the centers
    equally spaced from 1 to 5 while leaving room for long endpoint captions. */
 .jspsych-survey-likert-opts {
-  width: min(100%, 440px) !important;
-  max-width: 440px !important;
+  width: min(100%, 880px) !important;
+  max-width: 880px !important;
   margin: 32px auto 32px !important;
   padding: 0 0 94px !important;
   display: flex !important;
