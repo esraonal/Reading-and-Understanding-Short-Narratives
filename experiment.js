@@ -469,18 +469,40 @@ async function launch() {
     const selected = selectList(rows, assignment.list);
     const ordered = jsPsych.randomization.shuffle(selected);
     const timeline = [];
-    timeline.push(makeTextTrial(
-      `In this experiment, you will read 36 short narratives. ` +
-      (NUM_PRACTICE
-        ? 'Before beginning the main task, you will complete one required practice narrative. Afterward, you can choose to repeat the practice or begin the experiment. '
-        : '') +
-      '<p>Each narrative consists of five sentences. Press <kbd>Space</kbd> to reveal each new sentence. ' +
-      'The newest sentence will appear in bold, while the previous sentences remain visible.</p>' +
-      '<p><strong>After the fourth sentence, you will read the final sentence one word at a time.</strong> ' +
-      'The previous sentences will disappear, and three dashes (---) will represent each hidden word. ' +
-      'Press <kbd>Space</kbd> to reveal each word in sequence.</p>' +
-      '<p>After each narrative, you will answer five questions.</p>'
-    ));
+
+    timeline.push({
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `
+        <div class="reading-panel">
+          <div class="reading-text">
+            <p>In this experiment, you will read 36 short narratives.
+            Before beginning the main task, you will complete one required
+            practice narrative. Afterward, you can choose to repeat the
+            practice or begin the experiment.</p>
+
+            <p>Each narrative consists of five sentences.
+            Press <kbd>Space</kbd> to reveal each new sentence.
+            The newest sentence will appear in bold, while the
+            previous sentences remain visible.</p>
+
+            <p><strong>After the fourth sentence, you will read
+            the final sentence one word at a time.</strong>
+            The previous sentences will disappear, and three dashes
+            (---) will represent each hidden word.
+            Press <kbd>Space</kbd> to reveal each word in sequence.</p>
+
+            <p>After each narrative, you will answer five questions.</p>
+
+            <p>Please read each narrative naturally and at a comfortable
+            pace. Pay attention to what you read, as you will answer
+            questions afterward.</p>
+          </div>
+        </div>
+      `,
+      choices: ['Start practice'],
+      record_data: false
+    });
+
     if (NUM_PRACTICE > 0) {
       const practice = PRACTICE_STORIES[0];
       let practiceAttempt = 0;
