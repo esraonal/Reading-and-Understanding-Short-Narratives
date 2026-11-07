@@ -175,11 +175,15 @@ for(let list=0;list<12;list++) {
   assert.ok(firstItemWords.every(t=>t.stimulus.includes('moving-window')));
   const firstSlots=slotsOf(firstItemWords[0].stimulus);
   assert.equal(firstSlots.length,firstItemWords.length);
+  assert.ok(firstSlots.every(([,mask]) => mask==='---'), 'All hidden words need exactly three dashes');
   for(const t of firstItemWords) {
     assert.equal((t.stimulus.match(/class="mw-slot mw-current"/g)||[]).length,1);
     assert.deepEqual(slotsOf(t.stimulus),firstSlots);
   }
-  const eightWords=timeline.filter(t=>t.data?.phase==='word' && t.data.item_num===8);
+  const allWordStimuli=timeline.filter(t=>t.data?.phase==='word');
+  assert.ok(allWordStimuli.every(t => slotsOf(t.stimulus).every(([,mask]) => mask==='---')),
+    'All 36 critical continuations and the practice must use exactly three dashes per word');
+    const eightWords=timeline.filter(t=>t.data?.phase==='word' && t.data.item_num===8);
   assert.deepEqual(Array.from(eightWords.slice(0,2),t=>t.data.word),['Jack’s','son']);
   assert.deepEqual(Array.from(eightWords.slice(0,2),t=>t.data.region),['target','target']);
   console.log(`PASS list ${list}: one required practice + at most one optional repeat + 36 unique experimental items, 12 cells x 3 each`);

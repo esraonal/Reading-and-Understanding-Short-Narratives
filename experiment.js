@@ -279,21 +279,23 @@ function makeContextTrials(row, position, assignment) {
   });
 }
 
-function maskedWord(word) {
-  return '-'.repeat([...word].length);
+function maskedWord() {
+  // A constant placeholder for every hidden word, regardless of word length.
+  return '---';
 }
 
 function movingWindowHTML(textWords, currentIndex, position, row) {
   // A proportional font (Arial) is used for BOTH context and critical
-  // sentence. Each word slot contains *both* its real word and its dash mask,
-  // stacked in one CSS grid cell. The invisible layer still determines size;
-  // therefore neither widths nor wrapping change between word reveals.
+  // sentence. Every hidden word uses exactly three dashes. Each slot
+  // contains BOTH its real word and the three-dash mask, stacked in one
+  // CSS grid cell. Long words reserve their full width even while hidden,
+  // so neither positions nor line wrapping change between word reveals.
   // Only the current real word is visible (non-cumulative moving window).
   const spans = textWords.map((word, i) => {
     const active = i === currentIndex;
     return `<span class="mw-slot ${active ? 'mw-current' : 'mw-masked'}">` +
       `<span class="mw-real" aria-hidden="${!active}">${esc(word)}</span>` +
-      `<span class="mw-mask" aria-hidden="true">${maskedWord(word)}</span></span>`;
+      `<span class="mw-mask" aria-hidden="true">${maskedWord()}</span></span>`;
   });
   // During self-paced reading, show only the word and stationary dashes.
   // Instructions are provided beforehand, not repeated in this timed region.

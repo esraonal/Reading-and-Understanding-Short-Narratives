@@ -75,13 +75,14 @@ kbd {
   padding: 1px 5px;
 }
 
-/* Self-paced reading: identical left edge on every item, even if the
-   critical continuation has only a few words. Match the LEFT TEXT EDGE of
-   the context panel (960px panel minus 32px of padding on each side).
-   The region itself is invisible: no border, heading, or extra wording. */
+/* Self-paced reading: a single 720px-wide region centered on the screen.
+   All critical continuations begin at the same left edge, regardless of
+   sentence length; there is no visible border or instructional text.
+   Word slots reserve each word's true Arial width so long words fit; the
+   placeholder is always EXACTLY three dashes. */
 .word-panel {
-  width: calc(100% - 64px);
-  max-width: 896px;
+  width: min(720px, calc(100vw - 64px));
+  max-width: 720px;
   min-width: 0;
   min-height: 0;
   height: auto;
@@ -99,17 +100,18 @@ kbd {
   flex-flow: row wrap;
   align-content: flex-start;
   justify-content: flex-start;
-  column-gap: .75em;
+  column-gap: 22px; /* Same distance between all reserved word slots. */
   row-gap: .65em;
   font: inherit;
   line-height: inherit;
   text-align: left;
 }
 .mw-slot {
-  /* Both layers always occupy the same grid slot; neither the word nor
-     its hidden dashes changes the layout of any later slot. */
+  /* Both layers occupy the same grid cell. Even the widest real word keeps
+     its slot size while a three-dash mask is visible. */
   display: inline-grid;
   flex: 0 0 auto;
+  justify-items: center;
   align-items: baseline;
   white-space: nowrap;
   font: inherit;
@@ -117,7 +119,7 @@ kbd {
 }
 .mw-real, .mw-mask { grid-area: 1 / 1; white-space: nowrap; font: inherit; }
 .mw-real { color: var(--ink); }
-.mw-mask { color: #888888; }
+.mw-mask { color: #777777; }
 .mw-masked .mw-real { visibility: hidden; }
 .mw-current .mw-mask { visibility: hidden; }
 .mw-current .mw-real { visibility: visible; }
@@ -270,7 +272,7 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
   .jspsych-content { width: 95vw; }
   .reading-panel { padding: 18px 18px; }
   .story-panel { height: min(78dvh, 560px); }
-  .word-panel { width: calc(100% - 36px); max-width: none; height: auto; padding: 0; }
+  .word-panel { width: min(720px, calc(100vw - 36px)); height: auto; padding: 0; }
   body:has(#jspsych-survey-multi-choice-form) .jspsych-content,
   body:has(#jspsych-survey-likert-form) .jspsych-content { padding-top: 88px; padding-bottom: 64px; }
   .reading-text { font-size: 22px; line-height: 1.5; }

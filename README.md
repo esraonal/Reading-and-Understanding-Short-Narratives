@@ -37,7 +37,7 @@ The tests verify all 12 lists: 36 unique experimental narratives per list (plus 
 1. A brief instruction screen followed by **one practice story** (rocket landing). It uses the same four cumulative context sentences, word-by-word continuation after **and**, four required multiple-choice questions with shuffled options, and a required 1–5 plausibility question. After completing the five questions, participants choose **Repeat practice** or **Start experiment**. If they repeat it, the story and questions appear exactly one more time, then the main experiment begins automatically after a short instruction screen. The repeat is optional, but the first practice round is mandatory. Practice is **not** part of the 36 items or the 12-list counterbalancing.
 2. A fixation cross before each main narrative.
 3. Four context sentences appear **cumulatively from top to bottom in one fixed window**. The newest sentence is **bold**, and earlier sentences remain visible in regular type. The last context display ends with **and**.
-4. After another Space press, the context disappears, and the critical continuation **after “and”** starts word-by-word self-paced reading in the **same Arial font (22 px)**, in a compact, centered display with no box border, trial number, or on-screen prompt. The other word positions are shown as spaced, stationary dashes; no words shift as a word is revealed. Word-level RTs are recorded after “and,” including target, predicate, modifier, adjective, and spillover.
+4. After another Space press, the context disappears, and the critical continuation **after “and”** starts word-by-word self-paced reading in the **same Arial font (22 px)**, in a compact, centered display with no box border, trial number, or on-screen prompt. Every hidden word shows exactly **three dashes (`---`)**, with 22 px gaps between reserved word slots. No words or dashes shift as a word is revealed. Word-level RTs are recorded after “and,” including target, predicate, modifier, adjective, and spillover.
 5. Four numbered, **required** multiple-choice questions appear: location, impression source, perceptual access, and reader activity. The impression question always uses the item's assigned predicate (*looked/sounded/seemed*). Questions and options use smaller regular-weight type. Answer choices are **not numbered** and are **independently shuffled for each participant and question**; stored answer keys still point to the original source-option indices.
 6. The fifth, **required** question is the emotional plausibility rating on a **1–5** scale. The ordered rating points are intentionally **not shuffled**. The source's 18 matching and 18 opposite-adjective questions are preserved.
 7. Breaks appear after items 12 and 24; all 36 narratives are presented, in randomized order.
@@ -77,6 +77,12 @@ The two source CSV files live at `data/stimuli.csv` and `data/questions.csv`. Th
 
 The supplied text is preserved, including source phrases previously flagged for potential revision (e.g., #4's “to be not interested” and #29's “insulated window”). Those editorial issues are separate from counterbalancing.
 
+## Display-width audit for the critical continuation
+
+The 36 scenarios × 3 predicate versions plus the practice trial give **109 distinct critical continuations** (access variants repeat the same wording). I checked **every word** using browser-rendered Arial at 22 px and tested the word positions as the active word changes. The critical continuations range from **7 to 10 words**. The widest individual word slot is about **131 px** (e.g., *overwhelmed*), and the widest full continuation is approximately **681 px** including the consistent 22 px gaps. A centered, **720 px-wide** region therefore fits every critical continuation on a single line on standard desktop displays, while retaining the identical starting x-coordinate. Narrow screens may wrap, but positions remain fixed as the revealed word changes.
+
+Two files document the audit: `design/critical_word_spacing_audit.csv` (one line per critical continuation) and `design/critical_word_slot_audit.csv` (one line per word). The three dashes are placeholders, **not** an estimate of actual word length.
+
 ## 8. References
 
 Pinned CDN packages in `index.html`: jsPsych 8.3.0, html-keyboard-response 2.2.0, survey-multi-choice 2.2.1, survey-likert 2.2.0, pipe extension 0.2.0.
@@ -89,7 +95,7 @@ Pinned CDN packages in `index.html`: jsPsych 8.3.0, html-keyboard-response 2.2.0
 
 ## Minimal visual layout (Arial edition)
 
-The study uses a white background and black Arial text, without shadows or decorative cards. Narrative context and critical continuation both use **Arial 22 px**; only the latest context sentence is bold. The critical continuation is displayed in a smaller centered box with stationary, spaced dashes. Questions use regular Arial 20 px and options use regular Arial 18 px, without numbering on the options. Buttons use white text on a near-black background. These are visual changes only and do not affect word-level timing, the 12 lists, required answers, or DataPipe/Google Drive configuration.
+The study uses a white background and black Arial text, without shadows or decorative cards. Narrative context and critical continuation both use **Arial 22 px**; only the latest context sentence is bold. The critical continuation uses an invisible, centered 720 px-wide reading area with all first words aligned to the same left position, and exactly three stationary dashes for every hidden word. Questions use regular Arial 20 px and options use regular Arial 18 px, without numbering on the options. Buttons use white text on a near-black background. These are visual changes only and do not affect word-level timing, the 12 lists, required answers, or DataPipe/Google Drive configuration.
 
 ## Tutorial scenarios
 
@@ -107,7 +113,7 @@ The timed continuation now contains **only the currently visible word and the st
 
 ## Latest presentation refinements
 
-- All critical continuations start at the **same left-aligned text edge**, including short and long items. The reading area remains unbordered and visually minimal. Word slots remain fixed throughout a sentence.
+- All critical continuations start at the **same left-aligned text edge** of a centered 720 px reading region, including short and long items. The reading area remains unbordered and visually minimal. Each hidden word appears as `---`. The 22 px spacing between slots is fixed, and every slot reserves the full width of its actual word to prevent shifting.
 - Question screens are **top-anchored** with ample top padding and page scrolling when necessary; the first question should not be cut off on shorter monitors.
 - More vertical space separates question prompts, choices, and individual questions. Fonts remain Arial and regular weight.
 - Only the tutorial-choice logic and button spacing changed in this update; word timing, list assignment, and DataPipe settings are unchanged.
