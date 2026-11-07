@@ -237,8 +237,10 @@ function splitAtAnd(row) {
   };
 }
 
-function makeContextTrials(row, position, assignment) {
-  const {eventAnd} = splitAtAnd(row);
+
+function makeContextTrials(row, position, assignment, showInstructions = true) {
+  const { eventAnd } = splitAtAnd(row);
+
   // A single, fixed-height reading window stays in place across all four
   // context screens. Each sentence is a new top-to-bottom paragraph; only the
   // latest paragraph is bold. Earlier paragraphs remain visible, unbolded.
@@ -248,32 +250,58 @@ function makeContextTrials(row, position, assignment) {
     ['access_text', row.access_text],
     ['event_and', eventAnd]
   ];
+
   return segments.map(([sentenceName], i) => {
     const visible = segments.slice(0, i + 1).map(([, sentence], n) =>
       `<p class="context-sentence${n === i ? ' context-current' : ''}">${esc(sentence.trim())}</p>`
     ).join('');
+
     const last = i === segments.length - 1;
+
+    // Display Space-key reminders only when requested (e.g., during practice).
+    const instruction = showInstructions
+      ? `<div class="reading-instructions">${
+          last
+            ? 'Press <kbd>Space</kbd> to begin word-by-word reading'
+            : 'Press <kbd>Space</kbd> to reveal the next sentence'
+        }</div>`
+      : '';
+
     return {
       type: jsPsychHtmlKeyboardResponse,
-      choices: [' '], wait_for_key_release: true,
-      stimulus: `<div class="reading-panel story-panel"><div class="item-counter">${esc(itemLabel(row, position))}</div>` +
+      choices: [' '],
+      wait_for_key_release: true,
+
+      stimulus:
+        `<div class="reading-panel story-panel">` +
+        `<div class="item-counter">${esc(itemLabel(row, position))}</div>` +
         `<div class="reading-text context-body">${visible}</div>` +
-        `<div class="reading-instructions">${last ? 'Press <kbd>Space</kbd> to begin word-by-word reading' : 'Press <kbd>Space</kbd> to reveal the next sentence'}</div></div>`,
-      // If a particularly long story exceeds the fixed reading window, scroll
-      // only the text area to make the new sentence visible. Never move the panel.
+        instruction +
+        `</div>`,
+
+      // If a particularly long story exceeds the fixed reading window,
+      // scroll only the text area to make the new sentence visible.
+      // Never move the panel.
       on_load: () => {
         const body = document.querySelector('.context-body');
         const current = body?.querySelector('.context-current');
+
         if (body && current) {
           const sentenceBottom = current.offsetTop + current.offsetHeight;
           const bodyBottom = body.offsetTop + body.clientHeight;
-          if (sentenceBottom > bodyBottom) body.scrollTop += sentenceBottom - bodyBottom + 12;
+
+          if (sentenceBottom > bodyBottom) {
+            body.scrollTop += sentenceBottom - bodyBottom + 12;
+          }
         }
       },
+
       data: {
         ...baseData(row, position, assignment),
-        phase: 'sentence', sentence: sentenceName,
-        cumulative: true, visible_sentence_count: i + 1
+        phase: 'sentence',
+        sentence: sentenceName,
+        cumulative: true,
+        visible_sentence_count: i + 1
       }
     };
   });
@@ -469,24 +497,24 @@ async function launch() {
     const selected = selectList(rows, assignment.list);
     const ordered = jsPsych.randomization.shuffle(selected);
     const timeline = [];
-
     timeline.push({
       type: jsPsychHtmlButtonResponse,
       stimulus: `
         <div class="reading-panel">
           <div class="reading-text">
-            <p>In this experiment, you will read 36 short narratives.
-            Before beginning the main task, you will complete one required
+            <p>In this experiment, you will read 36 short narratives.</p>
+            
+            <p>Before beginning the main task, you will complete one required
             practice narrative. Afterward, you can choose to repeat the
             practice or begin the experiment.</p>
 
-            <p>Each narrative consists of five sentences.
+            <p>Each narrative consists of four sentences.
             Press <kbd>Space</kbd> to reveal each new sentence.
-            The newest sentence will appear in bold, while the
+            The most recent sentence will appear in bold, while the
             previous sentences remain visible.</p>
 
-            <p><strong>After the fourth sentence, you will read
-            the final sentence one word at a time.</strong>
+            <p><strong>Partway through the fourth sentence, 
+            the reading format will change to word-by-word reading.</strong>
             The previous sentences will disappear, and three dashes
             (---) will represent each hidden word.
             Press <kbd>Space</kbd> to reveal each word in sequence.</p>
@@ -502,7 +530,6 @@ async function launch() {
       choices: ['Start practice'],
       record_data: false
     });
-
     if (NUM_PRACTICE > 0) {
       const practice = PRACTICE_STORIES[0];
       let practiceAttempt = 0;
