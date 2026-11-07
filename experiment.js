@@ -559,8 +559,8 @@ async function launch() {
             record_data: false,
             on_start: () => { practiceAttempt += 1; }
           },
-          ...makeContextTrials(practice.row, 1, assignment).map(annotatePracticeAttempt),
           ...makeContextTrials(practice.row, 1, assignment, true).map(annotatePracticeAttempt),
+          ...makeWordTrials(practice.row, 1, assignment).map(annotatePracticeAttempt),
           ...makeQuestionTrials(practice.row, practice.options, 1, assignment).map(annotatePracticeAttempt)
         ];
       }
