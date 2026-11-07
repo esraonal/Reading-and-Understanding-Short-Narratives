@@ -34,7 +34,7 @@ The tests verify all 12 lists: 36 unique experimental narratives per list (plus 
 
 ## 3. Participant experience
 
-1. A brief instruction screen followed by **one practice story** (rocket landing). It uses the same four cumulative context sentences, word-by-word continuation after **and**, four required multiple-choice questions with shuffled options, and a required 1–5 plausibility question. After completing the five questions, participants choose **Repeat practice once** or **Start experiment**. If they repeat it, the story and questions appear exactly one more time, then the main experiment begins automatically after a short instruction screen. The repeat is optional, but the first practice round is mandatory. Practice is **not** part of the 36 items or the 12-list counterbalancing.
+1. A brief instruction screen followed by **one practice story** (rocket landing). It uses the same four cumulative context sentences, word-by-word continuation after **and**, four required multiple-choice questions with shuffled options, and a required 1–5 plausibility question. After completing the five questions, participants choose **Repeat practice** or **Start experiment**. If they repeat it, the story and questions appear exactly one more time, then the main experiment begins automatically after a short instruction screen. The repeat is optional, but the first practice round is mandatory. Practice is **not** part of the 36 items or the 12-list counterbalancing.
 2. A fixation cross before each main narrative.
 3. Four context sentences appear **cumulatively from top to bottom in one fixed window**. The newest sentence is **bold**, and earlier sentences remain visible in regular type. The last context display ends with **and**.
 4. After another Space press, the context disappears, and the critical continuation **after “and”** starts word-by-word self-paced reading in the **same Arial font (22 px)**, in a compact, centered display with no box border, trial number, or on-screen prompt. The other word positions are shown as spaced, stationary dashes; no words shift as a word is revealed. Word-level RTs are recorded after “and,” including target, predicate, modifier, adjective, and spillover.
@@ -98,7 +98,7 @@ The single tutorial narrative is defined in `practice.js`, not in the experiment
 
 ### One required practice with an optional repeat
 
-The project loads the jsPsych `html-button-response` plugin (version 2.1.0) for the two practice-choice buttons. GitHub Pages must be able to load the plugin CDN, as with the other jsPsych plugins. After selecting **Start experiment**, practice cannot be replayed; participants who choose **Repeat practice once** automatically move on after the second completion.
+The project loads the jsPsych `html-button-response` plugin (version 2.1.0) for the two practice-choice buttons. GitHub Pages must be able to load the plugin CDN, as with the other jsPsych plugins. After selecting **Start experiment**, practice cannot be replayed; participants who choose **Repeat practice** automatically move on after the second completion.
 
 ## Distraction-free self-paced reading screen
 
@@ -111,3 +111,9 @@ The timed continuation now contains **only the currently visible word and the st
 - Question screens are **top-anchored** with ample top padding and page scrolling when necessary; the first question should not be cut off on shorter monitors.
 - More vertical space separates question prompts, choices, and individual questions. Fonts remain Arial and regular weight.
 - Only the tutorial-choice logic and button spacing changed in this update; word timing, list assignment, and DataPipe settings are unchanged.
+
+## Final question-page refinements
+
+- Question-page headings and prompts now begin farther below the top of the viewport (128–170 px on desktop; 88 px on narrow screens). Pages remain scrollable.
+- Q5 uses the entire question width; the first Likert option aligns with the left edge of the question, the fifth aligns to the right. Rating values remain required and scored 1–5.
+- The participant-facing practice decision button now reads **Repeat practice** (not **Repeat practice once**). The experiment still allows no more than one optional repeat after the mandatory attempt.

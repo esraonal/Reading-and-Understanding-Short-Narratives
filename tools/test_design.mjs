@@ -70,7 +70,7 @@ for(let list=0;list<12;list++) {
   assert.ok(practiceMCQs.every(t=>t.questions[1].prompt.includes(' looked ')));
   assert.ok(practicePredicates.every(t=>t.data.item_num===null && t.data.condition_num===null));
   assert.equal(practiceDecision.data.phase,'practice_decision');
-  assert.deepEqual(Array.from(practiceDecision.choices), ['Repeat practice once','Start experiment']);
+  assert.deepEqual(Array.from(practiceDecision.choices), ['Repeat practice','Start experiment']);
   assert.equal(repeatedTrials.filter(t=>t.data?.phase==='word' && t.data?.region==='predicate').length,1);
   assert.equal(repeatedTrials.filter(t=>t.data?.phase==='sentence').length,4);
   assert.equal(repeatedTrials.filter(t=>t.data?.question_set==='multiple_choice').length,1);
@@ -155,7 +155,7 @@ for(let list=0;list<12;list++) {
   assert.ok(likerts.every(t=>t.questions[0].required && t.questions[0].labels.length===5));
   assert.ok(likerts.every(t=>t.questions[0].labels[0].startsWith('1') && t.questions[0].labels[4].startsWith('5')));
   assert.ok(likerts.every(t=>t.questions[0].prompt.includes('5.')));
-  assert.ok(likerts.every(t=>t.scale_width>=550 && t.scale_width<=700));
+  assert.ok(likerts.every(t=>t.scale_width===null));
   const itemOneContext=sentences.filter(t=>t.data.item_num===1);
   assert.deepEqual(Array.from(itemOneContext,t=>t.data.sentence),
     ['setup','activity','access_text','event_and']);

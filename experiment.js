@@ -394,7 +394,7 @@ function makeQuestionTrials(row, q, position, assignment) {
       labels: ['1 — Definitely not','2','3','4','5 — Definitely yes'],
       required: true
     }],
-    scale_width: 620,
+    scale_width: null,
     button_label: 'Next story',
     data: {
       ...baseData(row, position, assignment), phase: 'questions', question_set: 'plausibility',
@@ -462,7 +462,7 @@ async function launch() {
     const ordered = jsPsych.randomization.shuffle(selected);
     const timeline = [];
     timeline.push(makeTextTrial(
-      `The main task has 36 short stories. ${NUM_PRACTICE ? 'First, you must complete one practice story. Afterward, you may repeat it once or start the experiment. ' : ''}` +
+      `The main task has 36 short stories. ${NUM_PRACTICE ? 'First, you must complete one practice story. Afterward, you may repeat the practice story or start the experiment. ' : ''}` +
       'Press <kbd>Space</kbd> to reveal each new sentence. The newest sentence is bold, while earlier sentences stay visible. ' +
       'After the word <em>and</em>, the story continues one word at a time. Dashes show the other word positions without moving. ' +
       'Press <kbd>Space</kbd> to advance through the words. Answer all five questions after each story; the final rating uses a 1–5 scale.'
@@ -506,8 +506,8 @@ async function launch() {
       timeline.push({
         type: jsPsychHtmlButtonResponse,
         stimulus: '<div class="practice-choice"><p>Practice complete.</p>' +
-          '<p>You can repeat this practice story once, or start the experiment.</p></div>',
-        choices: ['Repeat practice once', 'Start experiment'],
+          '<p>You can repeat the practice story or start the experiment.</p></div>',
+        choices: ['Repeat practice', 'Start experiment'],
         data: {task:'practice', is_practice:true, phase:'practice_decision', item_id:practice.row.item_id},
         on_start: function(currentTrial) {
           currentTrial.data = {...(currentTrial.data || {}), practice_attempt: practiceAttempt};
