@@ -203,8 +203,8 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
    Each LI has the same 20px anchor width; space-between makes the centers
    equally spaced from 1 to 5 while leaving room for long endpoint captions. */
 .jspsych-survey-likert-opts {
-  width: min(100%, 620px) !important;
-  max-width: 620px !important;
+  width: min(100%, 440px) !important;
+  max-width: 440px !important;
   margin: 32px auto 32px !important;
   padding: 0 0 94px !important;
   display: flex !important;
