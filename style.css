@@ -1,138 +1,202 @@
-/* Consistent reading typography and stable presentation areas. */
+/* Minimal, consistent layout for the reading experiment.
+   Presentation only; the timing and counterbalancing logic is unchanged. */
 :root {
-  --ink: #182436;
-  --muted: #4f6071;
-  --edge: #d8e0ea;
-  --paper: #fff;
-  --reader-font: Georgia, 'Times New Roman', serif;
+  --ink: #111111;
+  --muted: #555555;
+  --border: #d8d8d8;
+  --background: #ffffff;
+  --font: Arial, Helvetica, sans-serif;
 }
 * { box-sizing: border-box; }
-body { background: #f7f9fc; color: var(--ink); }
-.jspsych-display-element { font-family: var(--reader-font); font-size: 22px; }
-.jspsych-content { width: min(95vw, 1080px); max-width: 1080px; }
-#boot-status { font: 18px system-ui, sans-serif; max-width: 680px; margin: 18vh auto; padding: 1rem; color: #334155; }
-.reading-panel {
-  background: var(--paper); border: 1px solid var(--edge);
-  border-radius: 12px; padding: 32px 42px;
-  text-align: left; box-shadow: 0 5px 24px rgba(15,23,42,.06);
+html, body { background: var(--background); color: var(--ink); }
+.jspsych-display-element {
+  background: var(--background);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 22px;
 }
-.reading-text {
-  font-family: var(--reader-font); font-size: 27px;
-  font-weight: 400; line-height: 1.55; color: #14202e;
-  text-align: left; letter-spacing: 0;
+.jspsych-content { width: min(94vw, 960px); max-width: 960px; }
+#boot-status { font: 18px var(--font); max-width: 680px; margin: 18vh auto; padding: 1rem; }
+
+/* Context: one stationary window; text builds from top to bottom. */
+.reading-panel {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 26px 32px;
+  text-align: left;
+  box-shadow: none;
+  margin-inline: auto;
 }
 .story-panel {
-  /* One stationary, top-aligned panel for EVERY precritical and word trial. */
-  width: 100%; height: min(78dvh, 670px);
-  display: flex; flex-direction: column; justify-content: flex-start;
+  width: 100%;
+  height: min(75dvh, 560px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
-/* Only the self-paced critical continuation uses a compact centered panel;
-   cumulative context keeps its fixed, larger top-aligned window. */
-.word-panel {
-  width: max-content;
-  max-width: min(94vw, 970px);
-  min-width: 0;
-  height: auto;
+.reading-text {
+  font-family: var(--font);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-align: left;
+  color: var(--ink);
+}
+.item-counter {
+  flex: none;
+  color: var(--muted);
+  font: 400 15px var(--font);
+  margin: 0 0 15px;
+}
+.context-body, .word-body {
+  flex: 1 1 auto;
   min-height: 0;
-  margin-inline: auto;
-  padding: 24px 30px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
-.word-panel .word-body { flex: 0 0 auto; overflow: visible; }
-.word-panel .moving-window { max-width: 100%; }
-.word-panel .item-counter { margin-bottom: 12px; }
-.word-panel .reading-instructions { margin-top: 16px; padding-top: 12px; }
-.item-counter { flex: none; font: 600 16px system-ui, sans-serif; color: var(--muted); margin-bottom: 18px; }
-.context-body, .word-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }
-.context-sentence { margin: 0 0 .60em; padding: 0; font-weight: 400; }
+.context-sentence { margin: 0 0 .65em; font-weight: 400; }
 .context-current { font-weight: 700; }
 .reading-instructions {
-  flex: none; font: 16px system-ui, sans-serif; color: var(--muted);
-  border-top: 1px solid var(--edge); margin-top: 18px; padding-top: 14px;
+  flex: none;
+  color: var(--muted);
+  font: 400 15px/1.45 var(--font);
+  border-top: 1px solid #eeeeee;
+  margin-top: 16px;
+  padding-top: 12px;
 }
-kbd { border: 1px solid #bbc6d3; border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; background: #f3f6fa; color: #182436; font-family: system-ui, sans-serif; }
+kbd {
+  font: inherit;
+  color: var(--ink);
+  background: #f6f6f6;
+  border: 1px solid #d6d6d6;
+  border-radius: 2px;
+  padding: 1px 5px;
+}
+
+/* Critical continuation: compact, centered and the SAME Arial 22 px. */
+.word-panel {
+  width: max-content;
+  max-width: min(94vw, 960px);
+  height: auto;
+  min-height: 0;
+  padding: 22px 26px;
+}
+.word-panel .word-body { flex: 0 0 auto; overflow: visible; }
+.word-panel .item-counter { margin-bottom: 12px; }
+.word-panel .reading-instructions { margin-top: 16px; }
 .moving-window {
-  display: flex; flex-flow: row wrap;
-  align-content: flex-start; justify-content: flex-start;
-  column-gap: .75em; row-gap: .60em;
-  font: inherit; line-height: inherit; text-align: left;
+  display: flex;
+  flex-flow: row wrap;
+  align-content: flex-start;
+  justify-content: flex-start;
+  column-gap: .75em;
+  row-gap: .65em;
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
 }
 .mw-slot {
-  /* Every slot contains BOTH forms in the same grid cell; hidden elements
-     still reserve their full proportional-font width, so layout never moves. */
-  display: inline-grid; flex: 0 0 auto; align-items: baseline;
-  white-space: nowrap; font: inherit; line-height: inherit;
+  /* Both layers always occupy the same grid slot; neither the word nor
+     its hidden dashes changes the layout of any later slot. */
+  display: inline-grid;
+  flex: 0 0 auto;
+  align-items: baseline;
+  white-space: nowrap;
+  font: inherit;
+  line-height: inherit;
 }
 .mw-real, .mw-mask { grid-area: 1 / 1; white-space: nowrap; font: inherit; }
 .mw-real { color: var(--ink); }
-.mw-mask { color: #8b9aaa; }
+.mw-mask { color: #888888; }
 .mw-masked .mw-real { visibility: hidden; }
 .mw-current .mw-mask { visibility: hidden; }
 .mw-current .mw-real { visibility: visible; }
 
-/* Moderate-size, regular-weight questions and unnumbered answer options. */
+/* Questions: simple text, no cards, labels or decorations. */
 .question-heading {
-  font: 400 17px system-ui, sans-serif; text-align: left;
-  color: var(--ink); margin-bottom: 14px; border-bottom: 1px solid var(--edge);
-  padding: 8px 0 12px;
+  font: 400 15px/1.4 var(--font);
+  text-align: left;
+  color: var(--muted);
+  margin: 0 0 12px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid #eeeeee;
 }
-.question-heading span { font: 400 15px system-ui, sans-serif; color: var(--muted); margin-left: 12px; }
+.question-heading span { font: inherit; color: var(--muted); margin-left: 10px; }
 .question-number { font-weight: 400; color: var(--ink); }
 #jspsych-survey-multi-choice-form, #jspsych-survey-likert-form {
-  width: 100%; margin: 0 auto; text-align: left;
-  font-family: var(--reader-font);
+  font-family: var(--font);
+  width: 100%;
+  margin: 0 auto;
+  text-align: left;
 }
 .jspsych-survey-multi-choice-question, .jspsych-survey-likert-question {
-  text-align: left; margin: 0 0 12px !important;
-  padding: 16px 20px !important; border: 1px solid var(--edge);
-  border-radius: 12px; background: var(--paper);
-  box-shadow: 0 3px 14px rgba(15,23,42,.035);
-  font-family: var(--reader-font) !important;
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  border-bottom: 1px solid #eeeeee;
+  border-radius: 0;
+  text-align: left;
+  padding: 14px 0 18px !important;
+  margin: 0 0 10px !important;
+  font-family: var(--font) !important;
 }
 .jspsych-survey-multi-choice-text, .jspsych-survey-likert-statement,
 .jspsych-survey-multi-choice-question p, .jspsych-survey-likert-question p {
-  font: 400 19px/1.4 var(--reader-font) !important; color: var(--ink);
-  margin-bottom: 8px;
+  font: 400 20px/1.45 var(--font) !important;
+  color: var(--ink);
+  margin: 0 0 10px !important;
 }
 .jspsych-survey-multi-choice-option {
-  margin: 7px 0 7px 4px !important;
-  font: 400 17px/1.35 var(--reader-font) !important;
+  margin: 7px 0 7px 3px !important;
+  font: 400 18px/1.4 var(--font) !important;
 }
-.jspsych-survey-multi-choice-option label { cursor: pointer; }
-input[type=radio] { accent-color: #17548d; width: 19px; height: 19px; vertical-align: middle; cursor: pointer; }
+.jspsych-survey-multi-choice-option label,
+.jspsych-survey-likert-opts li label { font-weight: 400 !important; cursor: pointer; }
+input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-align: middle; cursor: pointer; }
 .jspsych-survey-likert-opts {
-  font: 400 17px/1.4 var(--reader-font) !important;
-  margin: 16px auto 12px !important;
+  font: 400 18px/1.4 var(--font) !important;
+  margin: 15px auto 10px !important;
 }
-.jspsych-survey-likert-opts li { font-size: 17px !important; }
-.jspsych-survey-likert-opts li label { font: 400 17px/1.35 var(--reader-font) !important; }
-.jspsych-survey-likert-opts input[type=radio] { transform: scale(1.15); }
+.jspsych-survey-likert-opts li,
+.jspsych-survey-likert-opts li label { font: 400 18px/1.4 var(--font) !important; }
+.jspsych-survey-likert-opts input[type=radio] { transform: scale(1.08); }
+
+/* Plain, readable buttons with adequate contrast and a generous click target. */
 .jspsych-btn, button.jspsych-btn, input.jspsych-btn {
-  appearance: none; font: 700 20px system-ui, sans-serif !important;
-  background: #173b68 !important; color: #fff !important;
-  border: 2px solid #173b68 !important; border-radius: 12px !important;
-  padding: 17px 34px !important; min-height: 59px;
-  margin: 18px 6px !important; cursor: pointer;
-  box-shadow: 0 3px 8px rgba(15,23,42,.12);
+  appearance: none;
+  font: 400 18px var(--font) !important;
+  background: #222222 !important;
+  color: #ffffff !important;
+  border: 1px solid #222222 !important;
+  border-radius: 4px !important;
+  padding: 13px 26px !important;
+  min-height: 50px;
+  margin: 18px 0 !important;
+  cursor: pointer;
+  box-shadow: none;
 }
 .jspsych-btn:hover, .jspsych-btn:focus-visible {
-  background: #0e2c50 !important; color: #fff !important;
-  border-color: #0e2c50 !important;
+  background: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
 }
-.jspsych-btn:focus-visible { outline: 3px solid #8bc6ff; outline-offset: 3px; }
-.jspsych-btn:disabled { background: #65778c !important; border-color: #65778c !important; opacity: .7; cursor: not-allowed; }
-.small-note { font: 17px system-ui, sans-serif; color: var(--muted); }
+.jspsych-btn:focus-visible { outline: 3px solid #777777; outline-offset: 3px; }
+.jspsych-btn:disabled { opacity: .55; cursor: not-allowed; }
+.small-note { font: 400 16px var(--font); color: var(--muted); }
+
 @media (max-width: 720px) {
-  .reading-panel { padding: 22px 20px; }
-  .story-panel { height: min(78dvh, 640px); }
-  .reading-text { font-size: 23px; line-height: 1.52; }
-  .word-panel { width: max-content; max-width: min(94vw, 970px); height: auto; padding: 19px 20px; }
-  .context-sentence { margin-bottom: .52em; }
+  .jspsych-content { width: 95vw; }
+  .reading-panel { padding: 18px 18px; }
+  .story-panel { height: min(78dvh, 560px); }
+  .word-panel { width: max-content; max-width: 95vw; height: auto; padding: 18px 18px; }
+  .reading-text { font-size: 22px; line-height: 1.5; }
   .reading-instructions { font-size: 14px; }
-  .question-heading { font-size: 16px; }
-  .question-heading span { display: block; margin: 5px 0 0; font-size: 14px; }
-  .jspsych-survey-multi-choice-question, .jspsych-survey-likert-question { padding: 12px 15px !important; }
-  .jspsych-survey-multi-choice-text, .jspsych-survey-likert-statement { font-size: 18px !important; }
-  .jspsych-survey-multi-choice-option { font-size: 16px !important; }
-  .jspsych-survey-likert-opts li label { font-size: 16px !important; }
-  .jspsych-btn { font-size: 19px !important; padding: 15px 25px !important; }
+  .question-heading span { display: block; margin: 4px 0 0; }
+  .jspsych-survey-multi-choice-text, .jspsych-survey-likert-statement,
+  .jspsych-survey-multi-choice-question p, .jspsych-survey-likert-question p { font-size: 19px !important; }
+  .jspsych-survey-multi-choice-option,
+  .jspsych-survey-likert-opts li,
+  .jspsych-survey-likert-opts li label { font-size: 17px !important; }
 }

@@ -8,6 +8,10 @@ window.EXPERIMENT_CONFIG = {
   // The four pre-critical segments accumulate as full sentences through "and".
   // Only the continuation after "and" is word-by-word; other slots show dashes.
   fixationMs: 350,
+
+  // One reusable practice narrative before the 36 experimental stories.
+  // 1 = show practice (repeatable); 0 = skip practice.
+  practiceItems: 1,
   breakAfterItems: [12, 24],
 
   // Present four required multiple-choice questions and one required 1–5 rating.

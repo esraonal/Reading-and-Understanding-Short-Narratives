@@ -1,6 +1,6 @@
 # Narratives: 12-list counterbalanced jsPsych experiment (compact critical window, shuffled answers)
 
-This study uses **36 narratives** and **12 predicate × access combinations** (looks / sounds / seems × both / visual-only / auditory-only / neither). Every participant sees **each narrative once**. The 36 trials are distributed so each participant encounters **exactly three narratives in each of the 12 combinations**. There are **no fillers**.
+This study uses **36 narratives** and **12 predicate × access combinations** (looks / sounds / seems × both / visual-only / auditory-only / neither). Every participant sees **each narrative once**. The 36 trials are distributed so each participant encounters **exactly three narratives in each of the 12 combinations**. There are **no fillers**. The study starts with **one practice story that participants may repeat as often as they want** before starting the 36 experimental items.
 
 **The counterbalancing list is assigned between participants; predicate and access vary within a participant across narratives.** Thus the experimental factors are within-participant, while each narrative is presented in only one of its 12 forms per participant. This should be modeled accordingly in analysis, with participant and item variability considered.
 
@@ -30,35 +30,38 @@ Run the design tests:
 node tools/test_design.mjs
 ```
 
-The tests verify all 12 lists: 36 unique narratives per list, 3 items per condition, complete 12-cell coverage for every item across lists, matching impression questions, and unchanged presentation behavior.
+The tests verify all 12 lists: 36 unique experimental narratives per list (plus one repeatable practice story), 3 items per condition, complete 12-cell coverage for every item across lists, matching impression questions, and unchanged presentation behavior.
 
 ## 3. Participant experience
 
-1. A brief instruction screen and a fixation cross before each narrative.
-2. Four context sentences appear **cumulatively from top to bottom in one fixed window**. The newest sentence is **bold**, and earlier sentences remain visible in regular type. The last context display ends with **and**.
-3. After another Space press, the context disappears, and the critical continuation **after “and”** starts word-by-word self-paced reading in the **same Georgia font**, within a smaller, centered box sized to the continuation instead of the large context box. The other word positions are shown as spaced, stationary dashes; no words shift as a word is revealed. Word-level RTs are recorded after “and,” including target, predicate, modifier, adjective, and spillover.
-4. Four numbered, **required** multiple-choice questions appear: location, impression source, perceptual access, and reader activity. The impression question always uses the item's assigned predicate (*looked/sounded/seemed*). Questions and options use smaller regular-weight type. Answer choices are **not numbered** and are **independently shuffled for each participant and question**; stored answer keys still point to the original source-option indices.
-5. The fifth, **required** question is the emotional plausibility rating on a **1–5** scale. The ordered rating points are intentionally **not shuffled**. The source's 18 matching and 18 opposite-adjective questions are preserved.
-6. Breaks appear after items 12 and 24; all 36 narratives are presented, in randomized order.
+1. A brief instruction screen followed by **one practice story** (rocket landing). It uses the same four cumulative context sentences, word-by-word continuation after **and**, four required multiple-choice questions with shuffled options, and a required 1–5 plausibility question. After answering all five questions, participants click **Try practice again** (which repeats the same story and questions) or **Start experiment**. Repetition is unlimited. Then an instruction screen announces the 36 experimental items. Practice is **not** part of the 36 items or the 12-list counterbalancing.
+2. A fixation cross before each main narrative.
+3. Four context sentences appear **cumulatively from top to bottom in one fixed window**. The newest sentence is **bold**, and earlier sentences remain visible in regular type. The last context display ends with **and**.
+4. After another Space press, the context disappears, and the critical continuation **after “and”** starts word-by-word self-paced reading in the **same Arial font (22 px)**, within a smaller, centered box sized to the continuation instead of the large context box. The other word positions are shown as spaced, stationary dashes; no words shift as a word is revealed. Word-level RTs are recorded after “and,” including target, predicate, modifier, adjective, and spillover.
+5. Four numbered, **required** multiple-choice questions appear: location, impression source, perceptual access, and reader activity. The impression question always uses the item's assigned predicate (*looked/sounded/seemed*). Questions and options use smaller regular-weight type. Answer choices are **not numbered** and are **independently shuffled for each participant and question**; stored answer keys still point to the original source-option indices.
+6. The fifth, **required** question is the emotional plausibility rating on a **1–5** scale. The ordered rating points are intentionally **not shuffled**. The source's 18 matching and 18 opposite-adjective questions are preserved.
+7. Breaks appear after items 12 and 24; all 36 narratives are presented, in randomized order.
 
-## 4. In-person school lab: Sona and OSF
+## 4. In-person school lab: Sona and Google Drive
 
-This project is still configured for **local pilot mode**. Sona is a participant recruitment/credit system, not automatically an experiment host or list allocator. OSF is a research repository, not automatically connected as a live jsPsych response receiver. The current files do **not** directly upload results to OSF and do **not** use Sona to assign lists. During local pilots, each participant's data downloads on the lab computer at the end. Treat those CSVs as confidential research data according to your lab's approved storage protocol.
+This package is configured for **DataPipe mode** using the experiment ID in `config.js`, with GitHub Pages intended for hosting and an institution-approved Google Drive destination intended for saving responses. It has not been live-tested against the account. Sona handles lab appointments/credit, not data collection. Keep the response files separate from Sona identities and verify your university's research-data approval before running participants. To test with a local downloadable CSV instead, temporarily set `mode: 'pilot'` in `config.js`.
+
+Practice rows are tagged `task=practice`, `is_practice=true`, and `practice_attempt=1,2,...`, with ID `practice_rocket`. Repeated practice is kept separate from the 36 experimental narratives. All experimental trials are tagged `task=narrative`. Exclude `task=practice` from the primary analyses. The included `tools/check_counts.py` excludes practice. Set `practiceItems: 0` in `config.js` to disable practice entirely (default: `1`).
 
 Before collecting study data, use a shared 12-list assignment ledger or approved server-side allocator across the lab computers; test automatic or operator-managed saving to your institution-approved secure location; and define when, if permitted, data will be deposited in OSF. Do not rely on independent random assignment in each browser to balance lists. Save no names, Sona identifiers, or other directly identifying data in the behavioral CSV unless covered by your approved protocol.
 
 ## 5. Alternative online deployment: allocate lists and save data
 
-The default `config.js` mode is **pilot**, not a recruitment-ready deployment.
+The current `config.js` mode is **datapipe**. Do not begin recruitment until the GitHub Pages link and Google Drive data saves have been tested end-to-end.
 
-1. Set up a DataPipe experiment and a secure storage destination. In its dashboard enable allocation of **12 conditions** (here these are **counterbalancing list allocation slots**, not the experiment's 12 predicate × access conditions) and online data saving. Confirm the actual service behavior before recruitment.
-2. In `config.js`, set `mode: 'datapipe'` and a real 12-character `datapipeExperimentId`. Host the project over HTTPS.
+1. Confirm your DataPipe experiment uses an approved Google Drive folder, with **12 allocation conditions** (these correspond to counterbalancing lists, not fixed predicate × access assignments).
+2. Verify `config.js` has `mode: 'datapipe'` and the correct 12-character `datapipeExperimentId`, and host the project over HTTPS.
 3. Production maps the sequential 0–11 allocation slots through a fixed shuffled order `[7,2,11,4,9,0,5,1,10,6,3,8]` to the 12 lists. **This is allocation balance with a fixed permuted order, not independently reshuffled blocks.** Replacing dropouts and achieving equal *completed* numbers requires tracking list-specific completion counts.
 4. Test real submissions and data access in your host environment before recruiting. Do not collect actual participants using pilot local downloads.
 
 ## 6. Data and checking coverage
 
-Each jsPsych output CSV has one row per event. Key fields are `participant_id`, `prolific_pid`, `list_num`, `item_num`, `item_id`, `item_position`, `condition_num`, `predicate`, `access`, `visual`, `auditory`, `phase`, `region`, `word`, and `rt`. `list_num` is fixed across the participant; **`condition_num`, `predicate`, and `access` vary across their 36 narratives**. The impression-source question uses the correct predicate for each narrative. The plausibility score is recorded as `q_plausibility_rating` (1–5). Multiple-choice `q_*_answer` columns retain the **original 1-based option index** for scoring even after shuffling; `q_*_shown_at` records the displayed position, and `q_*_order` records the randomized display order. The final event has `phase=end` and `completed=true`.
+Each jsPsych output CSV has one row per event, including labeled practice events and experimental events. Key fields are `participant_id`, `prolific_pid`, `list_num`, `item_num`, `item_id`, `item_position`, `condition_num`, `predicate`, `access`, `visual`, `auditory`, `phase`, `region`, `word`, and `rt`. `list_num` is fixed across the participant; **`condition_num`, `predicate`, and `access` vary across their 36 narratives**. The impression-source question uses the correct predicate for each narrative. The plausibility score is recorded as `q_plausibility_rating` (1–5). Multiple-choice `q_*_answer` columns retain the **original 1-based option index** for scoring even after shuffling; `q_*_shown_at` records the displayed position, and `q_*_order` records the randomized display order. The final event has `phase=end` and `completed=true`.
 
 Collect downloaded participant CSVs in a `results/` directory and run:
 
@@ -83,3 +86,16 @@ Pinned CDN packages in `index.html`: jsPsych 8.3.0, html-keyboard-response 2.2.0
 - https://www.jspsych.org/v8/plugins/survey-likert/
 - https://www.jspsych.org/v8/extensions/pipe/
 - https://pipe.jspsych.org/docs/experiments/conditions
+
+## Minimal visual layout (Arial edition)
+
+The study uses a white background and black Arial text, without shadows or decorative cards. Narrative context and critical continuation both use **Arial 22 px**; only the latest context sentence is bold. The critical continuation is displayed in a smaller centered box with stationary, spaced dashes. Questions use regular Arial 20 px and options use regular Arial 18 px, without numbering on the options. Buttons use white text on a near-black background. These are visual changes only and do not affect word-level timing, the 12 lists, required answers, or DataPipe/Google Drive configuration.
+
+## Tutorial scenarios
+
+The single tutorial narrative is defined in `practice.js`, not in the experimental CSVs. It illustrates visual-only × looks. Participants can replay it any number of times before beginning the main experiment. Each replay includes all five required questions. The multiple-choice options are shuffled when the experiment is built. Practice data are marked with `practice_attempt` and excluded from analyses of the 36 experimental items. DataPipe assigns the counterbalancing list once per participant, not once per practice attempt.
+
+
+### Repeatable tutorial implementation
+
+The project loads the jsPsych `html-button-response` plugin (version 2.1.0) for the two practice-choice buttons. GitHub Pages must be able to load the plugin CDN, as with the other jsPsych plugins. After selecting **Start experiment**, practice cannot be replayed.

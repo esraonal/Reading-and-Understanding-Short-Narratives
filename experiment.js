@@ -21,6 +21,9 @@ const BASE_CELL_BY_ITEM = [
 // block or guarantee balanced numbers of completed participants after dropout.
 const ALLOCATION_LIST_ORDER = [7, 2, 11, 4, 9, 0, 5, 1, 10, 6, 3, 8];
 const CONFIG = window.EXPERIMENT_CONFIG;
+const PRACTICE_STORIES = window.PRACTICE_STORIES || [];
+const NUM_PRACTICE = CONFIG.practiceItems === undefined ? 1 : Number(CONFIG.practiceItems);
+
 
 // The CSV uses e.g. "visual_only" rather than "visual-only".
 // The participant's LIST is fixed, but the CONDITION varies across narratives.
@@ -174,17 +177,52 @@ async function getAssignment() {
 }
 
 function baseData(row, position, assignment) {
+  // Practice results have an explicit task label and are NEVER counted as
+  // experimental item-condition observations or in the 12-list design.
+  const practice = Boolean(row.is_practice);
   return {
-    task: 'narrative',
-    item_num: Number(row.item_num), item_id: row.item_id,
-    item_position: position, list_num: assignment.list,
-    condition_num: assignedCell(Number(row.item_num), assignment.list).cell,
+    task: practice ? 'practice' : 'narrative',
+    is_practice: practice,
+    item_num: practice ? null : Number(row.item_num),
+    item_id: row.item_id,
+    item_position: practice ? null : position,
+    practice_position: practice ? position : null,
+    list_num: assignment.list,
+    condition_num: practice ? null : assignedCell(Number(row.item_num), assignment.list).cell,
     predicate: row.predicate, access: normalizeAccess(row.access),
     visual: Number(row.visual), auditory: Number(row.auditory),
     adj: row.adj, modifier: row.modifier, valence: row.valence,
     access_type: row.access_type, access_setup: row.access_setup,
     visual_via: row.visual_via, audio_via: row.audio_via
   };
+}
+
+function itemLabel(row, position) {
+  return row.is_practice ? 'Practice story' : `Story ${position} of ${NUM_ITEMS}`;
+}
+
+function validatePractice(stories, experimentalRows) {
+  if (!Number.isInteger(NUM_PRACTICE) || NUM_PRACTICE < 0 || NUM_PRACTICE > 1)
+    throw new Error('config.js practiceItems must be 0 or 1.');
+  if (stories.length < NUM_PRACTICE)
+    throw new Error(`Expected ${NUM_PRACTICE} practice stories, found ${stories.length}.`);
+  const mainIds = new Set(experimentalRows.map(row => row.item_id));
+  const ids = new Set();
+  for (const {row, options} of stories.slice(0, NUM_PRACTICE)) {
+    if (!row.is_practice || ids.has(row.item_id) || mainIds.has(row.item_id))
+      throw new Error(`Practice story IDs must be unique and separate: ${row.item_id}`);
+    ids.add(row.item_id);
+    if (options.item_id !== row.item_id || !PREDICATES.includes(row.predicate) ||
+        !ACCESSES.includes(normalizeAccess(row.access)))
+      throw new Error(`Invalid practice story: ${row.item_id}`);
+    splitAtAnd(row);
+    const verb = {looks:'looked', sounds:'sounded', seems:'seemed'}[row.predicate];
+    if (!row.q_impression.includes(` ${verb} `))
+      throw new Error(`Practice perspective question must match ${row.predicate}`);
+    if (!Number.isInteger(parseKey(row.access_key)) || parseKey(row.access_key) < 1 ||
+        parseKey(row.access_key) > 4)
+      throw new Error(`Invalid practice access key: ${row.item_id}`);
+  }
 }
 
 // The source CSV's critical field starts "and ...". Present "and" as the
@@ -218,7 +256,7 @@ function makeContextTrials(row, position, assignment) {
     return {
       type: jsPsychHtmlKeyboardResponse,
       choices: [' '], wait_for_key_release: true,
-      stimulus: `<div class="reading-panel story-panel"><div class="item-counter">Story ${position} of ${NUM_ITEMS}</div>` +
+      stimulus: `<div class="reading-panel story-panel"><div class="item-counter">${esc(itemLabel(row, position))}</div>` +
         `<div class="reading-text context-body">${visible}</div>` +
         `<div class="reading-instructions">${last ? 'Press <kbd>Space</kbd> to begin word-by-word reading' : 'Press <kbd>Space</kbd> to reveal the next sentence'}</div></div>`,
       // If a particularly long story exceeds the fixed reading window, scroll
@@ -245,8 +283,8 @@ function maskedWord(word) {
   return '-'.repeat([...word].length);
 }
 
-function movingWindowHTML(textWords, currentIndex, position) {
-  // A proportional font (Georgia) is now used for BOTH context and critical
+function movingWindowHTML(textWords, currentIndex, position, row) {
+  // A proportional font (Arial) is used for BOTH context and critical
   // sentence. Each word slot contains *both* its real word and its dash mask,
   // stacked in one CSS grid cell. The invisible layer still determines size;
   // therefore neither widths nor wrapping change between word reveals.
@@ -257,8 +295,8 @@ function movingWindowHTML(textWords, currentIndex, position) {
       `<span class="mw-real" aria-hidden="${!active}">${esc(word)}</span>` +
       `<span class="mw-mask" aria-hidden="true">${maskedWord(word)}</span></span>`;
   });
-  // Compact center-aligned panel, just wide/tall enough for this continuation.
-  return `<div class="reading-panel story-panel word-panel"><div class="item-counter">Story ${position} of ${NUM_ITEMS}</div>` +
+  // Compact centered panel, just wide/tall enough for this continuation.
+  return `<div class="reading-panel story-panel word-panel"><div class="item-counter">${esc(itemLabel(row, position))}</div>` +
     `<div class="reading-text word-body"><div class="moving-window" aria-label="Word-by-word critical continuation">${spans.join('')}</div></div>` +
     '<div class="reading-instructions">Press <kbd>Space</kbd> to read the next word</div></div>';
 }
@@ -281,7 +319,7 @@ function makeWordTrials(row, position, assignment) {
     return {
       type: jsPsychHtmlKeyboardResponse,
       choices: [' '], wait_for_key_release: true,
-      stimulus: movingWindowHTML(continuation, index, position),
+      stimulus: movingWindowHTML(continuation, index, position, row),
       data: {
         ...baseData(row, position, assignment),
         phase: 'word', region,
@@ -327,7 +365,7 @@ function makeQuestionTrials(row, q, position, assignment) {
   });
   const mcq = {
     type: jsPsychSurveyMultiChoice,
-    preamble: `<div class="question-heading">Story ${position} of ${NUM_ITEMS} <span>Questions 1–4 of 5 · Answer every question to continue</span></div>`,
+    preamble: `<div class="question-heading">${esc(itemLabel(row, position))} <span>Questions 1–4 of 5 · Answer every question to continue</span></div>`,
     questions: choiceQuestions,
     button_label: 'Continue to question 5',
     data: {...baseData(row, position, assignment), phase: 'questions', question_set: 'multiple_choice'},
@@ -350,7 +388,7 @@ function makeQuestionTrials(row, q, position, assignment) {
   };
   const likert = {
     type: jsPsychSurveyLikert,
-    preamble: `<div class="question-heading">Story ${position} of ${NUM_ITEMS} <span>Question 5 of 5 · Response required</span></div>`,
+    preamble: `<div class="question-heading">${esc(itemLabel(row, position))} <span>Question 5 of 5 · Response required</span></div>`,
     questions: [{
       prompt: `<span class="question-number">5.</span> ${esc(row.q_plausibility)}`, name: 'plausibility',
       labels: ['1 — Definitely not','2','3','4','5 — Definitely yes'],
@@ -384,6 +422,7 @@ async function launch() {
       loadCSV('data/stimuli.csv'), loadCSV('data/questions.csv')
     ]);
     validateData(rows, questions);
+    validatePractice(PRACTICE_STORIES, rows);
     const assignment = await getAssignment();
     const qMap = new Map(questions.map(q => [q.item_id, q]));
     const pid = crypto.randomUUID();
@@ -422,10 +461,68 @@ async function launch() {
     const selected = selectList(rows, assignment.list);
     const ordered = jsPsych.randomization.shuffle(selected);
     const timeline = [];
-    timeline.push(makeTextTrial('In this study, you will read 36 short stories. Each story appears only once. Read each sentence at your normal pace. ' +
-      'Press <kbd>Space</kbd> to reveal each new sentence in the same reading window. The newest sentence is bold; the earlier sentences remain visible in regular type. ' +
-      'After the word <em>and</em>, the context disappears and the final continuation appears one word at a time, in the same font. ' +
-      'Only the current word is shown; dashes mark the other word positions without moving. All five questions require a response, and the last uses a 1–5 scale.'));
+    timeline.push(makeTextTrial(
+      `The main task has 36 short stories. ${NUM_PRACTICE ? 'First, you will try one practice story. You can repeat it as many times as you like before starting. ' : ''}` +
+      'Press <kbd>Space</kbd> to reveal each new sentence. The newest sentence is bold, while earlier sentences stay visible. ' +
+      'After the word <em>and</em>, the story continues one word at a time. Dashes show the other word positions without moving. ' +
+      'Press <kbd>Space</kbd> to advance through the words. Answer all five questions after each story; the final rating uses a 1–5 scale.'
+    ));
+    if (NUM_PRACTICE > 0) {
+      const practice = PRACTICE_STORIES[0];
+      let practiceAttempt = 0;
+      // Keep the practice trial and its five required questions identical on
+      // every repetition. Tag EACH record with the corresponding attempt so
+      // repeats can be recognized and excluded from experimental analyses.
+      function annotatePracticeAttempt(trial) {
+        const originalOnStart = trial.on_start;
+        return {
+          ...trial,
+          on_start: function(currentTrial) {
+            if (originalOnStart) originalOnStart(currentTrial);
+            currentTrial.data = {...(currentTrial.data || {}), practice_attempt: practiceAttempt};
+          }
+        };
+      }
+      const repeatedPractice = [
+        {
+          type:jsPsychHtmlKeyboardResponse,
+          stimulus:'<div style="font-size:46px">+</div>',
+          choices:'NO_KEYS', trial_duration:CONFIG.fixationMs,
+          record_data:false,
+          on_start: () => { practiceAttempt += 1; }
+        },
+        ...makeContextTrials(practice.row, 1, assignment).map(annotatePracticeAttempt),
+        ...makeWordTrials(practice.row, 1, assignment).map(annotatePracticeAttempt),
+        ...makeQuestionTrials(practice.row, practice.options, 1, assignment).map(annotatePracticeAttempt),
+        {
+          type:jsPsychHtmlButtonResponse,
+          stimulus:'<div class="practice-choice"><p>Practice complete.</p>' +
+            '<p>Would you like to try the same practice story again, or start the experiment?</p></div>',
+          choices:['Try practice again', 'Start experiment'],
+          data:{task:'practice', is_practice:true, phase:'practice_decision', item_id:practice.row.item_id},
+          on_start:function(currentTrial) {
+            currentTrial.data = {...(currentTrial.data || {}), practice_attempt:practiceAttempt};
+          }
+        }
+      ];
+      timeline.push({
+        timeline:repeatedPractice,
+        // Response 0 repeats; response 1 moves to the main experiment.
+        // Assignment to a counterbalancing list is performed only ONCE before
+        // this loop, even if the participant repeats practice many times.
+        loop_function:function(data) {
+          const events = data.values();
+          const decision = events[events.length - 1];
+          if (!decision || decision.phase !== 'practice_decision')
+            throw new Error('Practice choice was not recorded.');
+          return decision.response === 0;
+        }
+      });
+      timeline.push(makeTextTrial(
+        'The main experiment will now begin. You will read 36 new stories in the same format. ' +
+        'Each story appears once, and the order is randomized. Please read naturally and answer every question.'
+      ));
+    }
     for (const [i, row] of ordered.entries()) {
       const position = i + 1;
       timeline.push({type:jsPsychHtmlKeyboardResponse, stimulus:'<div style="font-size:46px">+</div>',

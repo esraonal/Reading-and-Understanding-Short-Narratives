@@ -53,7 +53,7 @@ def main():
     for path in files:
         try:
             rows = csv_rows(path)
-            item_events = [r for r in rows if r.get('phase') == 'word' and r.get('region') == 'predicate']
+            item_events = [r for r in rows if r.get('task') == 'narrative' and r.get('phase') == 'word' and r.get('region') == 'predicate']
             if not item_events:
                 rejected.append((path.name, 'no predicate events: may have stopped early'))
                 continue

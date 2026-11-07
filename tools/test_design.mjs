@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const root = new URL('../', import.meta.url);
 const js = fs.readFileSync(new URL('experiment.js',root), 'utf8');
+const practiceJs = fs.readFileSync(new URL('practice.js',root), 'utf8');
 const csvFiles = Object.fromEntries(['data/stimuli.csv','data/questions.csv'].map(
   p => [p, fs.readFileSync(new URL(p,root),'utf8')]));
 
@@ -17,7 +18,7 @@ async function buildList(list) {
     run: result => { launched = true; timeline = result; }
   };
   const win = {
-    EXPERIMENT_CONFIG:{mode:'pilot',fixationMs:100,breakAfterItems:[12,24],includeQuestions:true},
+    EXPERIMENT_CONFIG:{mode:'pilot',fixationMs:100,breakAfterItems:[12,24],includeQuestions:true,practiceItems:1},
     location:{href:`http://localhost:8000/?list=${list}`,search:`?list=${list}`}
   };
   const sandbox = {
@@ -26,9 +27,10 @@ async function buildList(list) {
     fetch:async path=>({ok:true,text:async()=>csvFiles[path]}),
     document:{getElementById:()=>({remove(){},textContent:''}),body:{textContent:''}},
     initJsPsych:()=>fakeJsPsych,
-    jsPsychHtmlKeyboardResponse:function(){},jsPsychSurveyMultiChoice:function(){},
+    jsPsychHtmlKeyboardResponse:function(){},jsPsychHtmlButtonResponse:function(){},jsPsychSurveyMultiChoice:function(){},
     jsPsychSurveyLikert:function(){},jsPsychExtensionPipe:{}
   };
+  vm.runInNewContext(practiceJs,sandbox,{filename:'practice.js'});
   vm.runInNewContext(js,sandbox,{filename:'experiment.js'});
   for(let i=0;i<50 && !launched;i++) await new Promise(r=>setTimeout(r,10));
   if(!launched) throw new Error(`Timeline did not start for list ${list}`);
@@ -39,12 +41,49 @@ const allByItem = new Map();
 let numTests=0;
 for(let list=0;list<12;list++) {
   const {timeline,util}=await buildList(list);
-  const pTrials=timeline.filter(t=>t.data?.phase==='word' && t.data?.region==='predicate');
+  const pTrials=timeline.filter(t=>t.data?.task==='narrative' && t.data?.phase==='word' && t.data?.region==='predicate');
+  const loopNodes=timeline.filter(t=>typeof t.loop_function==='function');
+  assert.equal(loopNodes.length,1,'Expected exactly one repeatable practice loop');
+  const practiceLoop=loopNodes[0];
+  const practiceTrials=practiceLoop.timeline;
+  const practicePredicates=practiceTrials.filter(t=>t.data?.task==='practice' && t.data?.phase==='word' && t.data?.region==='predicate');
+  const practiceMCQs=practiceTrials.filter(t=>t.data?.task==='practice' && t.data?.question_set==='multiple_choice');
+  const practiceLikerts=practiceTrials.filter(t=>t.data?.task==='practice' && t.data?.question_set==='plausibility');
+  const practiceContext=practiceTrials.filter(t=>t.data?.task==='practice' && t.data?.phase==='sentence');
+  const practiceDecision=practiceTrials.at(-1);
   const questionLookup=new Map(util.parseCSV(csvFiles['data/questions.csv']).map(q=>[q.item_id,q]));
-  const mcqs=timeline.filter(t=>t.data?.question_set==='multiple_choice');
-  const likerts=timeline.filter(t=>t.data?.question_set==='plausibility');
-  const sentences=timeline.filter(t=>t.data?.phase==='sentence');
+  const mcqs=timeline.filter(t=>t.data?.task==='narrative' && t.data?.question_set==='multiple_choice');
+  const likerts=timeline.filter(t=>t.data?.task==='narrative' && t.data?.question_set==='plausibility');
+  const sentences=timeline.filter(t=>t.data?.task==='narrative' && t.data?.phase==='sentence');
   assert.equal(pTrials.length,36);
+  assert.equal(practicePredicates.length,1);
+  assert.equal(practiceMCQs.length,1);
+  assert.equal(practiceLikerts.length,1);
+  assert.equal(practiceContext.length,4);
+  assert.deepEqual(Array.from(practicePredicates,t=>t.data.item_id),['practice_rocket']);
+  assert.deepEqual(Array.from(practicePredicates,t=>t.data.predicate),['looks']);
+  assert.deepEqual(Array.from(practicePredicates,t=>t.data.access),['visual_only']);
+  assert.ok(practiceMCQs.every(t=>t.questions.length===4 && t.questions.every(q=>q.required)));
+  assert.ok(practiceLikerts.every(t=>t.questions[0].required && t.questions[0].labels.length===5));
+  assert.ok(practiceContext[0].stimulus.includes('Practice story'));
+  assert.ok(practiceMCQs.every(t=>t.questions[1].prompt.includes(' looked ')));
+  assert.ok(practicePredicates.every(t=>t.data.item_num===null && t.data.condition_num===null));
+  assert.equal(practiceDecision.data.phase,'practice_decision');
+  assert.deepEqual(Array.from(practiceDecision.choices), ['Try practice again','Start experiment']);
+  assert.equal(practiceLoop.loop_function({values:()=>[{phase:'practice_decision',response:0}]}),true);
+  assert.equal(practiceLoop.loop_function({values:()=>[{phase:'practice_decision',response:1}]}),false);
+  // Repeating the tutorial adds the attempt number to every recorded practice event.
+  const fixation=practiceTrials[0];
+  fixation.on_start(fixation);
+  const fakePracticeTrial={data:{...practicePredicates[0].data}};
+  practicePredicates[0].on_start(fakePracticeTrial);
+  assert.equal(fakePracticeTrial.data.practice_attempt,1);
+  fixation.on_start(fixation);
+  practicePredicates[0].on_start(fakePracticeTrial);
+  assert.equal(fakePracticeTrial.data.practice_attempt,2);
+  const fakeDecision={data:{...practiceDecision.data}};
+  practiceDecision.on_start(fakeDecision);
+  assert.equal(fakeDecision.data.practice_attempt,2);
   assert.equal(mcqs.length,36);
   assert.equal(likerts.length,36);
   assert.equal(sentences.length,144);
@@ -124,9 +163,9 @@ for(let list=0;list<12;list++) {
   const eightWords=timeline.filter(t=>t.data?.phase==='word' && t.data.item_num===8);
   assert.deepEqual(Array.from(eightWords.slice(0,2),t=>t.data.word),['Jack’s','son']);
   assert.deepEqual(Array.from(eightWords.slice(0,2),t=>t.data.region),['target','target']);
-  console.log(`PASS list ${list}: 36 unique items, 12 cells x 3 each, 5 mandatory questions per item`);
+  console.log(`PASS list ${list}: repeatable practice loop + 36 unique experimental items, 12 cells x 3 each`);
   numTests++;
 }
 assert.equal(allByItem.size,36);
 for(const [id,cells] of allByItem) assert.equal(cells.size,12,`incomplete rotations for ${id}`);
-console.log(`PASS ${numTests} counterbalanced lists; each narrative appears once in every cell across lists; original reading presentation preserved.`);
+console.log(`PASS ${numTests} counterbalanced lists; one repeatable practice story is separate; each experimental narrative rotates through all 12 cells.`);
