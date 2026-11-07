@@ -66,7 +66,10 @@ for(let list=0;list<12;list++) {
   assert.deepEqual(Array.from(practicePredicates,t=>t.data.access),['visual_only']);
   assert.ok(practiceMCQs.every(t=>t.questions.length===4 && t.questions.every(q=>q.required)));
   assert.ok(practiceLikerts.every(t=>t.questions[0].required && t.questions[0].labels.length===5));
-  assert.ok(practiceContext[0].stimulus.includes('Practice story'));
+  assert.ok(practiceLikerts.every(t=>t.questions[0].prompt.includes('Based on the narrative,')));
+  assert.ok(practiceMCQs.every(t=>t.questions[0].prompt.includes('the narrative,')));
+  assert.ok(mcqs.every(t=>t.questions[0].prompt.includes('the narrative,'))); 
+  assert.ok(practiceContext[0].stimulus.includes('Practice narrative'));
   assert.ok(practiceMCQs.every(t=>t.questions[1].prompt.includes(' looked ')));
   assert.ok(practicePredicates.every(t=>t.data.item_num===null && t.data.condition_num===null));
   assert.equal(practiceDecision.data.phase,'practice_decision');
@@ -153,7 +156,11 @@ for(let list=0;list<12;list++) {
     assert.ok(block.questions[1].prompt.includes(` ${verb} `), block.data.item_id);
   }
   assert.ok(likerts.every(t=>t.questions[0].required && t.questions[0].labels.length===5));
-  assert.ok(likerts.every(t=>t.questions[0].labels[0].startsWith('1') && t.questions[0].labels[4].startsWith('5')));
+  assert.ok(likerts.every(t=>t.questions[0].labels[0].includes('>1</span>') && t.questions[0].labels[4].includes('>5</span>')));
+  assert.ok(likerts.every(t=>t.questions[0].labels[0].includes('Strongly disagree') && t.questions[0].labels[4].includes('Strongly agree')));
+  assert.ok(likerts.every(t=>t.questions[0].prompt.includes('Based on the narrative,')));
+  assert.ok(likerts.every(t=>!t.questions[0].prompt.includes(' did ')));
+  assert.ok(likerts.every(t=>t.questions[0].prompt.trim().endsWith('.')));
   assert.ok(likerts.every(t=>t.questions[0].prompt.includes('5.')));
   assert.ok(likerts.every(t=>t.scale_width===null));
   const itemOneContext=sentences.filter(t=>t.data.item_num===1);

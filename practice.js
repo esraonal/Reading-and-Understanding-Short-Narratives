@@ -25,11 +25,11 @@ window.PRACTICE_STORIES = [
       access_text: 'A live video feed on your monitor shows Zara, but the control-room audio is muted.',
       event: 'As the rocket drops quickly toward the ground, its parachute opens at the last moment and it lands safely,',
       critical: 'and Zara looks really relieved by the result.',
-      q_location: 'At the end of the story, where did you picture yourself?',
+      q_location: 'At the end of the narrative, where did you picture yourself?',
       q_impression: 'Whose impression, if anyone’s, was it that Zara looked relieved?',
       q_access: 'While Zara monitored the rocket, what was available to you in the operations office?',
       q_activity: 'What were you doing while Zara monitored the rocket?',
-      q_plausibility: 'Based on the story, did Zara have a reason to feel relieved?',
+      q_plausibility: 'Based on the narrative, Zara had a reason to feel relieved.',
       access_key: '1'
     },
     options: {
@@ -40,7 +40,7 @@ window.PRACTICE_STORIES = [
       location_key: '1',
       impression_1: 'You, the person updating flight logs',
       impression_2: 'One of Zara’s teammates',
-      impression_3: 'The person telling the story',
+      impression_3: 'The narrator',
       impression_4: 'No one in particular',
       impression_5: '',
       access_1: 'What Zara was doing, but not what she was saying',

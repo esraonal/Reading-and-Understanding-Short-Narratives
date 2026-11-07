@@ -1,6 +1,6 @@
 # Narratives: 12-list counterbalanced jsPsych experiment (compact critical window, shuffled answers)
 
-This study uses **36 narratives** and **12 predicate × access combinations** (looks / sounds / seems × both / visual-only / auditory-only / neither). Every participant sees **each narrative once**. The 36 trials are distributed so each participant encounters **exactly three narratives in each of the 12 combinations**. There are **no fillers**. The study starts with **one required practice story, which participants may repeat once if they choose** before starting the 36 experimental items.
+This study uses **36 narratives** and **12 predicate × access combinations** (looks / sounds / seems × both / visual-only / auditory-only / neither). Every participant sees **each narrative once**. The 36 trials are distributed so each participant encounters **exactly three narratives in each of the 12 combinations**. There are **no fillers**. The study starts with **one required practice narrative, which participants may repeat once if they choose** before starting the 36 experimental items.
 
 **The counterbalancing list is assigned between participants; predicate and access vary within a participant across narratives.** Thus the experimental factors are within-participant, while each narrative is presented in only one of its 12 forms per participant. This should be modeled accordingly in analysis, with participant and item variability considered.
 
@@ -30,16 +30,16 @@ Run the design tests:
 node tools/test_design.mjs
 ```
 
-The tests verify all 12 lists: 36 unique experimental narratives per list (plus one repeatable practice story), 3 items per condition, complete 12-cell coverage for every item across lists, matching impression questions, and unchanged presentation behavior.
+The tests verify all 12 lists: 36 unique experimental narratives per list (plus one repeatable practice narrative), 3 items per condition, complete 12-cell coverage for every item across lists, matching impression questions, and unchanged presentation behavior.
 
 ## 3. Participant experience
 
-1. A brief instruction screen followed by **one practice story** (rocket landing). It uses the same four cumulative context sentences, word-by-word continuation after **and**, four required multiple-choice questions with shuffled options, and a required 1–5 plausibility question. After completing the five questions, participants choose **Repeat practice** or **Start experiment**. If they repeat it, the story and questions appear exactly one more time, then the main experiment begins automatically after a short instruction screen. The repeat is optional, but the first practice round is mandatory. Practice is **not** part of the 36 items or the 12-list counterbalancing.
+1. A brief instruction screen followed by **one practice narrative** (rocket landing). It uses the same four cumulative context sentences, word-by-word continuation after **and**, four required multiple-choice questions with shuffled options, and a required 1–5 agreement statement. After completing the five questions, participants choose **Repeat practice** or **Start experiment**. If they repeat it, the narrative and questions appear exactly one more time, then the main experiment begins automatically after a short instruction screen. The repeat is optional, but the first practice round is mandatory. Practice is **not** part of the 36 items or the 12-list counterbalancing.
 2. A fixation cross before each main narrative.
 3. Four context sentences appear **cumulatively from top to bottom in one fixed window**. The newest sentence is **bold**, and earlier sentences remain visible in regular type. The last context display ends with **and**.
 4. After another Space press, the context disappears, and the critical continuation **after “and”** starts word-by-word self-paced reading in the **same Arial font (22 px)**, in a compact, centered display with no box border, trial number, or on-screen prompt. Every hidden word shows exactly **three dashes (`---`)**, with 22 px gaps between reserved word slots. No words or dashes shift as a word is revealed. Word-level RTs are recorded after “and,” including target, predicate, modifier, adjective, and spillover.
 5. Four numbered, **required** multiple-choice questions appear: location, impression source, perceptual access, and reader activity. The impression question always uses the item's assigned predicate (*looked/sounded/seemed*). Questions and options use smaller regular-weight type. Answer choices are **not numbered** and are **independently shuffled for each participant and question**; stored answer keys still point to the original source-option indices.
-6. The fifth, **required** question is the emotional plausibility rating on a **1–5** scale. The ordered rating points are intentionally **not shuffled**. The source's 18 matching and 18 opposite-adjective questions are preserved.
+6. The fifth, **required** question is the emotional plausibility agreement rating on a **1–5** scale. The agreement anchors run from **Strongly disagree** to **Strongly agree** beneath evenly spaced numerals 1–5; the ordered rating points are **not shuffled**. The source's 18 matching and 18 opposite-adjective questions are preserved.
 7. Breaks appear after items 12 and 24; all 36 narratives are presented, in randomized order.
 
 ## 4. In-person school lab: Sona and Google Drive
@@ -108,7 +108,7 @@ The project loads the jsPsych `html-button-response` plugin (version 2.1.0) for 
 
 ## Distraction-free self-paced reading screen
 
-The timed continuation now contains **only the currently visible word and the stationary dashed word positions**. The story counter, instruction footer ("Press Space..."), panel outline, and extra padding are removed **only on the self-paced reading screen**. Practice and opening instructions still explain Space before timing begins. The narrative context remains in its fixed, cumulative box, and all word RTs, list counterbalancing, questions, mandatory rocket practice with an optional repeat, and DataPipe settings are unchanged.
+The timed continuation now contains **only the currently visible word and the stationary dashed word positions**. The narrative counter, instruction footer ("Press Space..."), panel outline, and extra padding are removed **only on the self-paced reading screen**. Practice and opening instructions still explain Space before timing begins. The narrative context remains in its fixed, cumulative box, and all word RTs, list counterbalancing, questions, mandatory rocket practice with an optional repeat, and DataPipe settings are unchanged.
 
 
 ## Latest presentation refinements
@@ -123,3 +123,10 @@ The timed continuation now contains **only the currently visible word and the st
 - Question-page headings and prompts now begin farther below the top of the viewport (128–170 px on desktop; 88 px on narrow screens). Pages remain scrollable.
 - Q5 uses the entire question width; the first Likert option aligns with the left edge of the question, the fifth aligns to the right. Rating values remain required and scored 1–5.
 - The participant-facing practice decision button now reads **Repeat practice** (not **Repeat practice once**). The experiment still allows no more than one optional repeat after the mandatory attempt.
+
+## Q5 agreement statement and uniform terminology (latest update)
+
+- All participant-facing references now use **narrative** instead of **story** (including practice, instructions, counters, and location question). The impression-source alternative **The person telling the narrative** was simplified to **The narrator**.
+- Q5 is now a statement, e.g., **Based on the narrative, Zara had a reason to feel relieved.** Respondents rate **1 Strongly disagree** through **5 Strongly agree**. The endpoint captions appear below the numbers without dashes.
+- All **18 opposite-emotion items** remain opposite-emotion; the other 18 remain matching-emotion. The unusual phrase *be not interested* in #4 is rendered *be uninterested* without changing its intended meaning.
+- In the stored jsPsych CSV, `q_plausibility_rating` remains a 1–5 number. The wording and anchor interpretation changed, so avoid combining these data with runs from earlier question versions without tracking version.

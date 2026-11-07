@@ -198,7 +198,7 @@ function baseData(row, position, assignment) {
 }
 
 function itemLabel(row, position) {
-  return row.is_practice ? 'Practice story' : `Story ${position} of ${NUM_ITEMS}`;
+  return row.is_practice ? 'Practice narrative' : `Narrative ${position} of ${NUM_ITEMS}`;
 }
 
 function validatePractice(stories, experimentalRows) {
@@ -210,7 +210,7 @@ function validatePractice(stories, experimentalRows) {
   const ids = new Set();
   for (const {row, options} of stories.slice(0, NUM_PRACTICE)) {
     if (!row.is_practice || ids.has(row.item_id) || mainIds.has(row.item_id))
-      throw new Error(`Practice story IDs must be unique and separate: ${row.item_id}`);
+      throw new Error(`Practice narrative IDs must be unique and separate: ${row.item_id}`);
     ids.add(row.item_id);
     if (options.item_id !== row.item_id || !PREDICATES.includes(row.predicate) ||
         !ACCESSES.includes(normalizeAccess(row.access)))
@@ -393,11 +393,17 @@ function makeQuestionTrials(row, q, position, assignment) {
     preamble: `<div class="question-heading">${esc(itemLabel(row, position))} <span>Question 5 of 5 · Response required</span></div>`,
     questions: [{
       prompt: `<span class="question-number">5.</span> ${esc(row.q_plausibility)}`, name: 'plausibility',
-      labels: ['1 — Definitely not','2','3','4','5 — Definitely yes'],
+      labels: [
+        '<span class="likert-number">1</span><span class="likert-endpoint">Strongly disagree</span>',
+        '<span class="likert-number">2</span>',
+        '<span class="likert-number">3</span>',
+        '<span class="likert-number">4</span>',
+        '<span class="likert-number">5</span><span class="likert-endpoint">Strongly agree</span>'
+      ],
       required: true
     }],
     scale_width: null,
-    button_label: 'Next story',
+    button_label: 'Next narrative',
     data: {
       ...baseData(row, position, assignment), phase: 'questions', question_set: 'plausibility',
       plaus_type: q.plaus_type
@@ -464,10 +470,10 @@ async function launch() {
     const ordered = jsPsych.randomization.shuffle(selected);
     const timeline = [];
     timeline.push(makeTextTrial(
-      `The main task has 36 short stories. ${NUM_PRACTICE ? 'First, you must complete one practice story. Afterward, you may repeat the practice story or start the experiment. ' : ''}` +
+      `The main task has 36 short narratives. ${NUM_PRACTICE ? 'First, you must complete one practice narrative. Afterward, you may repeat the practice narrative or start the experiment. ' : ''}` +
       'Press <kbd>Space</kbd> to reveal each new sentence. The newest sentence is bold, while earlier sentences stay visible. ' +
-      'After the word <em>and</em>, the story continues one word at a time. Dashes show the other word positions without moving. ' +
-      'Press <kbd>Space</kbd> to advance through the words. Answer all five questions after each story; the final rating uses a 1–5 scale.'
+      'After the word <em>and</em>, the narrative continues one word at a time. Dashes show the other word positions without moving. ' +
+      'Press <kbd>Space</kbd> to advance through the words. Answer all five questions after each narrative; the final statement uses a 1–5 agreement scale.'
     ));
     if (NUM_PRACTICE > 0) {
       const practice = PRACTICE_STORIES[0];
@@ -508,7 +514,7 @@ async function launch() {
       timeline.push({
         type: jsPsychHtmlButtonResponse,
         stimulus: '<div class="practice-choice"><p>Practice complete.</p>' +
-          '<p>You can repeat the practice story or start the experiment.</p></div>',
+          '<p>You can repeat the practice narrative or start the experiment.</p></div>',
         choices: ['Repeat practice', 'Start experiment'],
         data: {task:'practice', is_practice:true, phase:'practice_decision', item_id:practice.row.item_id},
         on_start: function(currentTrial) {
@@ -523,8 +529,8 @@ async function launch() {
         conditional_function: () => repeatPractice
       });
       timeline.push(makeTextTrial(
-        'The main experiment will now begin. You will read 36 new stories in the same format. ' +
-        'Each story appears once, and the order is randomized. Please read naturally and answer every question.'
+        'The main experiment will now begin. You will read 36 new narratives in the same format. ' +
+        'Each narrative appears once, and the order is randomized. Please read naturally and answer every question.'
       ));
     }
     for (const [i, row] of ordered.entries()) {
@@ -535,7 +541,7 @@ async function launch() {
       timeline.push(...makeWordTrials(row, position, assignment));
       if (CONFIG.includeQuestions) timeline.push(...makeQuestionTrials(row, qMap.get(row.item_id), position, assignment));
       if (CONFIG.breakAfterItems.includes(position) && position < NUM_ITEMS) {
-        timeline.push(makeTextTrial(`You have completed ${position} of ${NUM_ITEMS} stories. ` +
+        timeline.push(makeTextTrial(`You have completed ${position} of ${NUM_ITEMS} narratives. ` +
           'You may take a short break before continuing.'));
       }
     }
