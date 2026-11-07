@@ -338,7 +338,7 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
   #jspsych-html-button-response-btngroup { column-gap: 22px; row-gap: 22px; }
   #jspsych-html-button-response-btngroup .jspsych-btn { min-width: min(75vw, 260px); }
   .jspsych-survey-multi-choice-text, .jspsych-survey-likert-statement,
-  .jspsych-survey-multi-choice-question p, .jspsych-survey-likert-question p { font-size: 17px !important; }
+  .jspsych-survey-multi-choice-question p, .jspsych-survey-likert-question p { font-size: 25px !important; }
   .jspsych-survey-multi-choice-option,
   .jspsych-survey-likert-opts li,
   .jspsych-survey-likert-opts li label { font-size: 16px !important; }
