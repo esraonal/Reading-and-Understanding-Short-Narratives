@@ -238,7 +238,7 @@ function splitAtAnd(row) {
 }
 
 
-function makeContextTrials(row, position, assignment, showInstructions = true) {
+function makeContextTrials(row, position, assignment, showInstructions = false) {
   const { eventAnd } = splitAtAnd(row);
 
   // A single, fixed-height reading window stays in place across all four
