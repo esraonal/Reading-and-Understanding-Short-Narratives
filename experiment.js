@@ -249,10 +249,10 @@ function splitAtAnd(row) {
 
 
 // Gate only whole-sentence Space presses during the main experiment.
-// Minimum: 120 ms per word, bounded to 0.8–3.5 seconds per sentence.
-// Practice has no minimum, and critical word-by-word trials remain unchanged.
+// Fixed minimum: 1 second per sentence. Practice has no minimum,
+// and critical word-by-word trials remain unchanged.
 function minimumSentenceMs(text) {
-  return Math.max(800, Math.min(3500, words(text).length * 120));
+  return 1000;
 }
 
 function makeContextTrials(row, position, assignment, showInstructions = false) {
