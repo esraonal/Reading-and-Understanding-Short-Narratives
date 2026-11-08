@@ -400,3 +400,10 @@ body:has(.question-sequence) .jspsych-content {
   .question-prompt { font-size: 25px; }
   .question-option { font-size: 16px; }
 }
+
+/* Intro only: accumulate instructions in a stationary narrative-style window. */
+.intro-panel { height: min(75dvh, 560px); }
+.intro-panel .context-body { font-size: 22px; }
+@media (max-width: 720px) {
+  .intro-panel { height: min(78dvh, 560px); }
+}

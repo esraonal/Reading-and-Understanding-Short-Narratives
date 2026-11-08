@@ -519,31 +519,40 @@ function makeIntroTrial() {
   let keyHandler = null;
   return {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<div class="reading-panel intro-panel">` +
-      `<div class="reading-text"><p id="intro-paragraph">${paragraphs[0]}</p></div>` +
+    // Keep prior instruction paragraphs visible; the newest one is bold,
+    // exactly as in the cumulative narrative-reading display.
+    stimulus: `<div class="reading-panel story-panel intro-panel">` +
+      `<div class="reading-text context-body" id="intro-body">` +
+      `<p class="context-sentence context-current">${paragraphs[0]}</p></div>` +
       `<div class="reading-instructions" id="intro-progress">` +
-      `Press <kbd>Space</kbd> for the next paragraph (1 of ${paragraphs.length})</div></div>`,
+      `Press <kbd>Space</kbd> to reveal the next paragraph (1 of ${paragraphs.length})</div></div>`,
     choices: ['Start practice'],
     record_data: false,
     on_load: () => {
-      const paragraph = document.getElementById('intro-paragraph');
+      const body = document.getElementById('intro-body');
       const progress = document.getElementById('intro-progress');
       const buttonGroup = document.getElementById('jspsych-html-button-response-btngroup');
       let index = 0;
-      // This overrides the existing !important display rule for button groups.
       if (buttonGroup) buttonGroup.style.setProperty('display', 'none', 'important');
       keyHandler = event => {
         if (event.code !== 'Space' || event.repeat || index >= paragraphs.length - 1) return;
         event.preventDefault();
         index += 1;
-        paragraph.innerHTML = paragraphs[index];
+        body.querySelector('.context-current')?.classList.remove('context-current');
+        body.insertAdjacentHTML('beforeend',
+          `<p class="context-sentence context-current">${paragraphs[index]}</p>`);
+        // Keep newly revealed text visible if the cumulative instructions overflow.
+        const current = body.querySelector('.context-current');
+        const overflow = current.getBoundingClientRect().bottom -
+          body.getBoundingClientRect().bottom;
+        if (overflow > 0) body.scrollTop += overflow + 12;
         if (index === paragraphs.length - 1) {
           progress.textContent = 'You have finished the instructions. Select Start practice to continue.';
           if (buttonGroup) buttonGroup.style.removeProperty('display');
           document.removeEventListener('keydown', keyHandler);
           keyHandler = null;
         } else {
-          progress.innerHTML = `Press <kbd>Space</kbd> for the next paragraph (${index + 1} of ${paragraphs.length})`;
+          progress.innerHTML = `Press <kbd>Space</kbd> to reveal the next paragraph (${index + 1} of ${paragraphs.length})`;
         }
       };
       document.addEventListener('keydown', keyHandler);
