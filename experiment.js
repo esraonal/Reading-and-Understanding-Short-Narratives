@@ -377,6 +377,38 @@ function movingWindowHTML(textWords, currentIndex, position, row) {
     `<div class="moving-window" aria-label="Word-by-word reading">${spans.join('')}</div></div></div>`;
 }
 
+// Fit each critical continuation into one centered line. Measure the full line,
+// including every reserved word/mask slot, so its position remains unchanged
+// as participants press Space. Only shrink text when viewport width requires it.
+function fitCriticalLine() {
+  const line = document.querySelector('.word-panel .moving-window');
+  const wordBody = document.querySelector('.word-panel .word-body');
+  const parent = document.querySelector('.jspsych-content');
+  if (!line || !wordBody || !parent) return;
+
+  const availableWidth = Math.max(1, parent.clientWidth - 2);
+  const baseSize = 28;
+  const baseGap = 22;
+  wordBody.style.fontSize = `${baseSize}px`;
+  line.style.columnGap = `${baseGap}px`;
+
+  // CSS gives the line its intrinsic (unwrapped) width. When it does not fit,
+  // scale both type and gaps equally, retaining proportions and centering.
+  const naturalWidth = line.getBoundingClientRect().width;
+  if (naturalWidth > availableWidth) {
+    let scale = (availableWidth - 1) / naturalWidth;
+    wordBody.style.fontSize = `${baseSize * scale}px`;
+    line.style.columnGap = `${baseGap * scale}px`;
+    // Compensate for small font metrics/rounding differences across browsers.
+    for (let attempt = 0; attempt < 3 &&
+         line.getBoundingClientRect().width > availableWidth; attempt++) {
+      scale *= 0.995;
+      wordBody.style.fontSize = `${baseSize * scale}px`;
+      line.style.columnGap = `${baseGap * scale}px`;
+    }
+  }
+}
+
 function makeWordTrials(row, position, assignment) {
   // Main trials continue after "and" as before. Practice has an ordinary
   // mid-sentence split with no experimental predicate or RT regions.
@@ -402,6 +434,7 @@ function makeWordTrials(row, position, assignment) {
       type: jsPsychHtmlKeyboardResponse,
       choices: [' '], wait_for_key_release: true,
       stimulus: movingWindowHTML(continuation, index, position, row),
+      on_load: fitCriticalLine,
       data: {
         ...baseData(row, position, assignment),
         phase: 'word', region,

@@ -88,8 +88,8 @@ kbd {
    visible border or instructions. Word slots reserve each word's true
    Arial width, so words never shift during successive reveals. */
 .word-panel {
-  width: min(600px, calc(100vw - 64px));
-  max-width: 600px;
+  width: max-content;
+  max-width: 100%;
   min-width: 0;
   min-height: 0;
   height: auto;
@@ -106,9 +106,14 @@ body:has(.word-panel) .jspsych-content-wrapper {
   align-items: center !important;
   justify-content: center !important;
 }
-body:has(.word-panel) .jspsych-content { margin: auto !important; }
+body:has(.word-panel) .jspsych-content {
+  width: calc(100vw - 48px);
+  max-width: none;
+  margin: auto !important;
+}
 .word-panel .word-body {
   flex: 0 0 auto;
+  width: max-content;
   overflow: visible;
   font-size: 28px;
   line-height: 1.5;
@@ -116,7 +121,8 @@ body:has(.word-panel) .jspsych-content { margin: auto !important; }
 }
 .moving-window {
   display: flex;
-  flex-flow: row wrap;
+  width: max-content;
+  flex-flow: row nowrap;
   align-content: flex-start;
   justify-content: center;
   column-gap: 22px; /* Same distance between all reserved word slots. */
@@ -326,9 +332,10 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
 
 @media (max-width: 720px) {
   .jspsych-content { width: 95vw; }
+  body:has(.word-panel) .jspsych-content { width: calc(100vw - 32px); }
   .reading-panel { padding: 18px 18px; }
   .story-panel { max-height: min(78dvh, 560px); }
-  .word-panel { width: min(720px, calc(100vw - 36px)); height: auto; padding: 0; }
+  .word-panel { width: max-content; max-width: 100%; height: auto; padding: 0; }
   body:has(#jspsych-survey-multi-choice-form) .jspsych-content,
   body:has(#jspsych-survey-likert-form) .jspsych-content { padding-top: 88px; padding-bottom: 64px; }
   .reading-text { font-size: 22px; line-height: 1.5; }
