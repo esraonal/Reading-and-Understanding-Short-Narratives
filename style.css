@@ -328,7 +328,7 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
   .jspsych-content { width: 95vw; }
   .reading-panel { padding: 18px 18px; }
   .story-panel { max-height: min(78dvh, 560px); }
-  .word-panel { width: min(600px, calc(100vw - 36px)); height: auto; padding: 0; }
+  .word-panel { width: min(720px, calc(100vw - 36px)); height: auto; padding: 0; }
   body:has(#jspsych-survey-multi-choice-form) .jspsych-content,
   body:has(#jspsych-survey-likert-form) .jspsych-content { padding-top: 88px; padding-bottom: 64px; }
   .reading-text { font-size: 22px; line-height: 1.5; }
@@ -406,4 +406,13 @@ body:has(.question-sequence) .jspsych-content {
 .intro-panel .context-body { font-size: 22px; }
 @media (max-width: 720px) {
   .intro-panel { height: min(78dvh, 560px); }
+}
+
+/* Only the short post-practice instructions: fit the box to the full text.
+   The invisible guide keeps this box the same size as sentences accumulate. */
+.intro-panel.main-start-panel {
+  height: auto;
+}
+.intro-panel.main-start-panel .context-body {
+  flex: 0 1 auto;
 }

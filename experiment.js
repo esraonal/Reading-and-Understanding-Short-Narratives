@@ -720,18 +720,26 @@ function makeMainStartTrial() {
     'Please read each narrative naturally and at a comfortable pace.',
     'Pay attention to what you read, as you will answer questions afterward.'
   ];
+  // Size this transition panel to the complete four-sentence text from the start.
+  // The invisible guide avoids resizing as sentences are revealed.
+  const sizeGuide = paragraphs.map((text, i) =>
+    `<p class="context-sentence${i === paragraphs.length - 1 ? ' context-current' : ''}">${text}</p>`
+  ).join('');
   let keyHandler = null;
   return {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<div class="reading-panel story-panel intro-panel">` +
+    stimulus: `<div class="reading-panel story-panel intro-panel main-start-panel">` +
       `<div class="reading-text context-body" id="main-start-body">` +
-      `<p class="context-sentence context-current">${paragraphs[0]}</p></div>` +
+      `<div class="context-size-guide" aria-hidden="true">${sizeGuide}</div>` +
+      `<div class="context-visible" id="main-start-visible">` +
+      `<p class="context-sentence context-current">${paragraphs[0]}</p></div></div>` +
       `<div class="reading-instructions" id="main-start-progress">` +
       `Press <kbd>Space</kbd> to reveal the next paragraph (1 of ${paragraphs.length})</div></div>`,
     choices: ['Start experiment'],
     record_data: false,
     on_load: () => {
       const body = document.getElementById('main-start-body');
+      const visible = document.getElementById('main-start-visible');
       const progress = document.getElementById('main-start-progress');
       const buttonGroup = document.getElementById('jspsych-html-button-response-btngroup');
       let index = 0;
@@ -740,10 +748,10 @@ function makeMainStartTrial() {
         if (event.code !== 'Space' || event.repeat || index >= paragraphs.length - 1) return;
         event.preventDefault();
         index += 1;
-        body.querySelector('.context-current')?.classList.remove('context-current');
-        body.insertAdjacentHTML('beforeend',
+        visible.querySelector('.context-current')?.classList.remove('context-current');
+        visible.insertAdjacentHTML('beforeend',
           `<p class="context-sentence context-current">${paragraphs[index]}</p>`);
-        const current = body.querySelector('.context-current');
+        const current = visible.querySelector('.context-current');
         const overflow = current.getBoundingClientRect().bottom -
           body.getBoundingClientRect().bottom;
         if (overflow > 0) body.scrollTop += overflow + 12;
