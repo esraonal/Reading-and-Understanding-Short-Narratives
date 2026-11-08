@@ -189,8 +189,10 @@ function baseData(row, position, assignment) {
     practice_position: practice ? position : null,
     list_num: assignment.list,
     condition_num: practice ? null : assignedCell(Number(row.item_num), assignment.list).cell,
-    predicate: row.predicate, access: normalizeAccess(row.access),
-    visual: Number(row.visual), auditory: Number(row.auditory),
+    predicate: practice ? null : row.predicate,
+    access: practice ? null : normalizeAccess(row.access),
+    visual: practice ? null : Number(row.visual),
+    auditory: practice ? null : Number(row.auditory),
     adj: row.adj, modifier: row.modifier, valence: row.valence,
     access_type: row.access_type, access_setup: row.access_setup,
     visual_via: row.visual_via, audio_via: row.audio_via
@@ -212,16 +214,24 @@ function validatePractice(stories, experimentalRows) {
     if (!row.is_practice || ids.has(row.item_id) || mainIds.has(row.item_id))
       throw new Error(`Practice narrative IDs must be unique and separate: ${row.item_id}`);
     ids.add(row.item_id);
-    if (options.item_id !== row.item_id || !PREDICATES.includes(row.predicate) ||
-        !ACCESSES.includes(normalizeAccess(row.access)))
-      throw new Error(`Invalid practice story: ${row.item_id}`);
-    splitAtAnd(row);
-    const verb = {looks:'looked', sounds:'sounded', seems:'seemed'}[row.predicate];
-    if (!row.q_impression.includes(` ${verb} `))
-      throw new Error(`Practice perspective question must match ${row.predicate}`);
-    if (!Number.isInteger(parseKey(row.access_key)) || parseKey(row.access_key) < 1 ||
-        parseKey(row.access_key) > 4)
-      throw new Error(`Invalid practice access key: ${row.item_id}`);
+    if (options.item_id !== row.item_id ||
+        !Array.isArray(row.practice_sentences) || row.practice_sentences.length !== 4 ||
+        row.practice_sentences.some(s => typeof s !== 'string' || !s.trim()) ||
+        !row.practice_continuation || !words(row.practice_continuation).length)
+      throw new Error(`Invalid independent practice story: ${row.item_id}`);
+    if (!Array.isArray(options.questions) || options.questions.length !== 4 ||
+        !options.rating_prompt || typeof options.rating_prompt !== 'string')
+      throw new Error(`Practice must have four comprehension questions and one rating: ${row.item_id}`);
+    const questionIds = new Set();
+    for (const question of options.questions) {
+      if (!question.id || questionIds.has(question.id) || !question.prompt ||
+          !Array.isArray(question.choices) || question.choices.length < 2 ||
+          new Set(question.choices).size !== question.choices.length ||
+          !Number.isInteger(question.correct_index) ||
+          question.correct_index < 1 || question.correct_index > question.choices.length)
+        throw new Error(`Invalid practice question in ${row.item_id}`);
+      questionIds.add(question.id);
+    }
   }
 }
 
@@ -239,17 +249,19 @@ function splitAtAnd(row) {
 
 
 function makeContextTrials(row, position, assignment, showInstructions = false) {
-  const { eventAnd } = splitAtAnd(row);
-
-  // A single, fixed-height reading window stays in place across all four
-  // context screens. Each sentence is a new top-to-bottom paragraph; only the
-  // latest paragraph is bold. Earlier paragraphs remain visible, unbolded.
-  const segments = [
-    ['setup', row.setup],
-    ['activity', row.activity],
-    ['access_text', row.access_text],
-    ['event_and', eventAnd]
-  ];
+  // Practice uses a self-contained ordinary story, not the experimental
+  // setup/activity/access/event-and template.
+  const segments = row.is_practice
+    ? row.practice_sentences.map((sentence, i) => [`practice_sentence_${i + 1}`, sentence])
+    : (() => {
+        const { eventAnd } = splitAtAnd(row);
+        return [
+          ['setup', row.setup],
+          ['activity', row.activity],
+          ['access_text', row.access_text],
+          ['event_and', eventAnd]
+        ];
+      })();
 
   // Reserve enough space for all four sentences on every context screen.
   // The guide is invisible; it keeps each narrative's box at one stable height.
@@ -337,20 +349,26 @@ function movingWindowHTML(textWords, currentIndex, position, row) {
 }
 
 function makeWordTrials(row, position, assignment) {
-  // Only the critical continuation AFTER "and" is presented one word at a time.
-  // The setup, activity, access, event, and "and" were already shown in full.
-  const continuation = words(splitAtAnd(row).criticalAfterAnd);
-  // The target can have more than one word (e.g., 'Jack’s son'), so do not
-  // assume the critical predicate always occurs at index 2.
-  const predicateAt = continuation.findIndex(w => w.toLowerCase().replace(/[^\p{L}]/gu, '') === row.predicate);
-  if (predicateAt < 0) throw new Error(`Cannot locate critical predicate for ${row.item_id}`);
-  if (predicateAt === 0) throw new Error(`Critical continuation lacks a target before predicate: ${row.item_id}`);
+  // Main trials continue after "and" as before. Practice has an ordinary
+  // mid-sentence split with no experimental predicate or RT regions.
+  const continuation = words(row.is_practice
+    ? row.practice_continuation
+    : splitAtAnd(row).criticalAfterAnd);
+  let predicateAt = -1;
+  if (!row.is_practice) {
+    predicateAt = continuation.findIndex(w =>
+      w.toLowerCase().replace(/[^\p{L}]/gu, '') === row.predicate);
+    if (predicateAt < 0) throw new Error(`Cannot locate critical predicate for ${row.item_id}`);
+    if (predicateAt === 0) throw new Error(`Critical continuation lacks a target before predicate: ${row.item_id}`);
+  }
   return continuation.map((word, index) => {
-    let region = 'target';
-    if (index === predicateAt) region = 'predicate';
-    else if (index === predicateAt + 1) region = 'modifier';
-    else if (index === predicateAt + 2) region = 'adjective';
-    else if (index > predicateAt + 2) region = 'spillover';
+    let region = row.is_practice ? 'practice_word' : 'target';
+    if (!row.is_practice) {
+      if (index === predicateAt) region = 'predicate';
+      else if (index === predicateAt + 1) region = 'modifier';
+      else if (index === predicateAt + 2) region = 'adjective';
+      else if (index > predicateAt + 2) region = 'spillover';
+    }
     return {
       type: jsPsychHtmlKeyboardResponse,
       choices: [' '], wait_for_key_release: true,
@@ -378,7 +396,109 @@ function shuffleOptions(options) {
   return shuffled;
 }
 
+// A separate practice questionnaire: four factual recall questions and one
+// general clarity rating. It shares only the sequential-answer interface.
+// The real 36-item questionnaire below is unchanged.
+function makePracticeQuestionTrials(row, q, position, assignment, jsPsych) {
+  const orders = new Map();
+  const sections = q.questions.map((question, index) => {
+    const shuffled = shuffleOptions(question.choices);
+    orders.set(question.id, shuffled);
+    const choicesHTML = shuffled.map(option =>
+      `<label class="question-option"><input type="radio" name="practice-${esc(question.id)}" ` +
+      `value="${option.sourceIndex}"><span>${esc(option.text)}</span></label>`
+    ).join('');
+    return `<section class="question-step${index === 0 ? ' is-active' : ''}" ` +
+      `data-step="${index}" ${index === 0 ? '' : 'hidden'}>` +
+      `<fieldset class="question-fieldset"><legend class="question-prompt">` +
+      `<span class="question-number">${index + 1}.</span> ${esc(question.prompt)}</legend>` +
+      `<div class="question-options">${choicesHTML}</div></fieldset></section>`;
+  });
+  const scale = [1, 2, 3, 4, 5].map(value => {
+    const endpoint = value === 1
+      ? '<span class="likert-endpoint">Strongly disagree</span>'
+      : value === 5 ? '<span class="likert-endpoint">Strongly agree</span>' : '';
+    return `<li><input type="radio" id="practice-rating-${value}" ` +
+      `name="practice-rating" value="${value}">` +
+      `<label for="practice-rating-${value}">` +
+      `<span class="likert-number">${value}</span>${endpoint}</label></li>`;
+  }).join('');
+  sections.push(
+    `<section class="question-step" data-step="4" hidden>` +
+    `<fieldset class="question-fieldset"><legend class="question-prompt">` +
+    `<span class="question-number">5.</span> ${esc(q.rating_prompt)}</legend>` +
+    `<ul class="jspsych-survey-likert-opts">${scale}</ul></fieldset></section>`
+  );
+
+  return [{
+    type: jsPsychHtmlKeyboardResponse,
+    choices: 'NO_KEYS',
+    stimulus: `<div id="question-sequence" class="question-sequence">` +
+      `<div class="question-heading">Practice narrative ` +
+      `<span id="question-progress">Question 1 of 5 · Select an answer to continue</span></div>` +
+      `<div class="question-stage">${sections.join('')}</div></div>`,
+    data: {
+      ...baseData(row, position, assignment),
+      phase: 'questions', question_set: 'independent_practice_questions'
+    },
+    on_load: () => {
+      const container = document.getElementById('question-sequence');
+      const progress = document.getElementById('question-progress');
+      let current = 0;
+      let startedAt = performance.now();
+      let finished = false;
+      const answers = {};
+      const questionRTs = {};
+
+      function handleAnswer(event) {
+        const input = event.target;
+        if (!input.matches('input[type="radio"]') || finished) return;
+        const step = input.closest('.question-step');
+        if (!step || Number(step.dataset.step) !== current) return;
+        const key = current < 4 ? q.questions[current].id : 'clarity';
+        answers[key] = Number(input.value);
+        questionRTs[key] = Math.round(performance.now() - startedAt);
+
+        if (current === 4) {
+          finished = true;
+          container.removeEventListener('change', handleAnswer);
+          const recorded = {
+            response: {},
+            practice_clarity_rating: answers.clarity,
+            practice_clarity_rt: questionRTs.clarity
+          };
+          for (const question of q.questions) {
+            const displayed = orders.get(question.id);
+            const sourceIndex = answers[question.id];
+            const shownIndex = displayed.findIndex(option => option.sourceIndex === sourceIndex);
+            recorded[`practice_${question.id}_answer`] = sourceIndex;
+            recorded[`practice_${question.id}_shown_at`] = shownIndex + 1;
+            recorded[`practice_${question.id}_order`] = displayed.map(o => o.sourceIndex).join('-');
+            recorded[`practice_${question.id}_rt`] = questionRTs[question.id];
+            recorded[`practice_${question.id}_correct`] = sourceIndex === question.correct_index;
+            recorded.response[question.id] = displayed[shownIndex].text;
+          }
+          recorded.response.clarity = answers.clarity - 1;
+          requestAnimationFrame(() => jsPsych.finishTrial(recorded));
+          return;
+        }
+        step.hidden = true;
+        step.classList.remove('is-active');
+        current += 1;
+        const next = container.querySelector(`.question-step[data-step="${current}"]`);
+        next.hidden = false;
+        next.classList.add('is-active');
+        progress.textContent = `Question ${current + 1} of 5 · Select an answer to continue`;
+        startedAt = performance.now();
+      }
+      container.addEventListener('change', handleAnswer);
+    }
+  }];
+}
+
 function makeQuestionTrials(row, q, position, assignment, jsPsych) {
+  if (row.is_practice)
+    return makePracticeQuestionTrials(row, q, position, assignment, jsPsych);
   // One continuous question screen: show one question at a time and advance
   // immediately after an answer is selected. No extra Continue buttons.
   const specs = [
