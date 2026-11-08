@@ -353,15 +353,26 @@ body:has(.question-sequence) .jspsych-content-wrapper {
 }
 body:has(.question-sequence) .jspsych-content {
   margin: 0 auto !important;
-  padding-top: clamp(90px, 13vh, 145px);
-  padding-bottom: 72px;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 .question-sequence {
   width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   text-align: left;
   font-family: var(--font);
 }
-.question-stage { min-height: 280px; }
+.question-stage {
+  flex: 1;
+  min-height: 280px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 18px 0 42px;
+}
+.question-step { width: 100%; }
 .question-step[hidden] { display: none !important; }
 .question-step.is-active { animation: question-slide-in 180ms ease-out; }
 @keyframes question-slide-in {
@@ -374,10 +385,18 @@ body:has(.question-sequence) .jspsych-content {
   width: 100%;
   padding: 0;
   margin: 0 0 24px;
-  font: 400 25px/1.45 var(--font);
+  font: 400 28px/1.45 var(--font);
   color: var(--ink);
+  text-align: center;
 }
-.question-options { display: flex; flex-direction: column; gap: 10px; }
+.question-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: max-content;
+  max-width: 100%;
+  margin-inline: auto;
+}
 .question-option {
   display: flex;
   gap: 12px;
@@ -396,8 +415,8 @@ body:has(.question-sequence) .jspsych-content {
   .question-step.is-active { animation: none; }
 }
 @media (max-width: 720px) {
-  body:has(.question-sequence) .jspsych-content { padding-top: 72px; }
-  .question-prompt { font-size: 25px; }
+  body:has(.question-sequence) .jspsych-content { padding-top: 0; }
+  .question-prompt { font-size: 28px; }
   .question-option { font-size: 16px; }
 }
 

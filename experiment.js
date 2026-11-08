@@ -252,7 +252,7 @@ function splitAtAnd(row) {
 // bounded to 1.5–6 seconds, discourages skipping without imposing a deadline.
 // The critical word-by-word trials remain fully self-paced and unchanged.
 function minimumSentenceMs(text) {
-  return Math.max(1500, Math.min(6000, words(text).length * 180));
+  return Math.max(800, Math.min(3500, words(text).length * 120));
 }
 
 function makeContextTrials(row, position, assignment, showInstructions = false) {
