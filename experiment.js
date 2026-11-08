@@ -711,6 +711,59 @@ function makeIntroTrial() {
   };
 }
 
+// The transition from practice to the main task uses the same cumulative
+// presentation as the introductory instructions and narrative context screens.
+function makeMainStartTrial() {
+  const paragraphs = [
+    'The main experiment will now begin.',
+    'You will read 36 new narratives in the same format.',
+    'Please read each narrative naturally and at a comfortable pace.',
+    'Pay attention to what you read, as you will answer questions afterward.'
+  ];
+  let keyHandler = null;
+  return {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<div class="reading-panel story-panel intro-panel">` +
+      `<div class="reading-text context-body" id="main-start-body">` +
+      `<p class="context-sentence context-current">${paragraphs[0]}</p></div>` +
+      `<div class="reading-instructions" id="main-start-progress">` +
+      `Press <kbd>Space</kbd> to reveal the next paragraph (1 of ${paragraphs.length})</div></div>`,
+    choices: ['Start experiment'],
+    record_data: false,
+    on_load: () => {
+      const body = document.getElementById('main-start-body');
+      const progress = document.getElementById('main-start-progress');
+      const buttonGroup = document.getElementById('jspsych-html-button-response-btngroup');
+      let index = 0;
+      if (buttonGroup) buttonGroup.style.setProperty('display', 'none', 'important');
+      keyHandler = event => {
+        if (event.code !== 'Space' || event.repeat || index >= paragraphs.length - 1) return;
+        event.preventDefault();
+        index += 1;
+        body.querySelector('.context-current')?.classList.remove('context-current');
+        body.insertAdjacentHTML('beforeend',
+          `<p class="context-sentence context-current">${paragraphs[index]}</p>`);
+        const current = body.querySelector('.context-current');
+        const overflow = current.getBoundingClientRect().bottom -
+          body.getBoundingClientRect().bottom;
+        if (overflow > 0) body.scrollTop += overflow + 12;
+        if (index === paragraphs.length - 1) {
+          progress.textContent = 'Select Start experiment to continue.';
+          if (buttonGroup) buttonGroup.style.removeProperty('display');
+          document.removeEventListener('keydown', keyHandler);
+          keyHandler = null;
+        } else {
+          progress.innerHTML = `Press <kbd>Space</kbd> to reveal the next paragraph (${index + 1} of ${paragraphs.length})`;
+        }
+      };
+      document.addEventListener('keydown', keyHandler);
+    },
+    on_finish: () => {
+      if (keyHandler) document.removeEventListener('keydown', keyHandler);
+    }
+  };
+}
+
 function makeTextTrial(html) {
   return {type: jsPsychHtmlKeyboardResponse, choices:[' '], wait_for_key_release:true,
     stimulus:`<div class="reading-panel"><div class="reading-text">${html}</div>` +
@@ -817,11 +870,7 @@ async function launch() {
         timeline: buildPracticeRound(),
         conditional_function: () => repeatPractice
       });
-      timeline.push(makeTextTrial(
-        'The main experiment will now begin. You will read 36 new narratives in the same format. ' +        
-        'Please read each narrative naturally and at a comfortable pace. ' +
-        'Pay attention to what you read, as you will answer questions afterward.'
-      ));
+      timeline.push(makeMainStartTrial());
     }
     for (const [i, row] of ordered.entries()) {
       const position = i + 1;
