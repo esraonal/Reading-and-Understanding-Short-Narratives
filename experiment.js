@@ -248,9 +248,9 @@ function splitAtAnd(row) {
 }
 
 
-// Gate only whole-sentence Space presses. A minimum of 180 ms per word,
-// bounded to 1.5–6 seconds, discourages skipping without imposing a deadline.
-// The critical word-by-word trials remain fully self-paced and unchanged.
+// Gate only whole-sentence Space presses during the main experiment.
+// Minimum: 120 ms per word, bounded to 0.8–3.5 seconds per sentence.
+// Practice has no minimum, and critical word-by-word trials remain unchanged.
 function minimumSentenceMs(text) {
   return Math.max(800, Math.min(3500, words(text).length * 120));
 }
@@ -277,7 +277,7 @@ function makeContextTrials(row, position, assignment, showInstructions = false) 
   ).join('');
 
   return segments.map(([sentenceName, sentence], i) => {
-    const minDisplayMs = minimumSentenceMs(sentence);
+    const minDisplayMs = row.is_practice ? 0 : minimumSentenceMs(sentence);
     const visible = segments.slice(0, i + 1).map(([, sentence], n) =>
       `<p class="context-sentence${n === i ? ' context-current' : ''}">${esc(sentence.trim())}</p>`
     ).join('');
@@ -324,15 +324,17 @@ function makeContextTrials(row, position, assignment, showInstructions = false) 
         // Capture Space before jsPsych's keyboard listener can accept it.
         // Early or held-down presses are ignored; the participant must press
         // again after the minimum time. This does not affect word trials.
-        const appearedAt = performance.now();
-        spaceGate = event => {
-          if ((event.code === 'Space' || event.key === ' ') &&
-              (event.repeat || performance.now() - appearedAt < minDisplayMs)) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-          }
-        };
-        window.addEventListener('keydown', spaceGate, true);
+        if (minDisplayMs > 0) {
+          const appearedAt = performance.now();
+          spaceGate = event => {
+            if ((event.code === 'Space' || event.key === ' ') &&
+                (event.repeat || performance.now() - appearedAt < minDisplayMs)) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          };
+          window.addEventListener('keydown', spaceGate, true);
+        }
       },
       on_finish: () => {
         if (spaceGate) window.removeEventListener('keydown', spaceGate, true);
