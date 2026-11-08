@@ -343,3 +343,60 @@ input[type=radio] { accent-color: #222222; width: 18px; height: 18px; vertical-a
   .jspsych-survey-likert-opts li,
   .jspsych-survey-likert-opts li label { font-size: 16px !important; }
 }
+
+/* Question sequence: one persistent page, one required question at a time. */
+body:has(.question-sequence) .jspsych-content-wrapper {
+  margin: 0 auto !important;
+  flex: 0 0 auto !important;
+  align-items: flex-start !important;
+  width: 100%;
+}
+body:has(.question-sequence) .jspsych-content {
+  margin: 0 auto !important;
+  padding-top: clamp(90px, 13vh, 145px);
+  padding-bottom: 72px;
+}
+.question-sequence {
+  width: 100%;
+  text-align: left;
+  font-family: var(--font);
+}
+.question-stage { min-height: 280px; }
+.question-step[hidden] { display: none !important; }
+.question-step.is-active { animation: question-slide-in 180ms ease-out; }
+@keyframes question-slide-in {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.question-fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.question-prompt {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 24px;
+  font: 400 25px/1.45 var(--font);
+  color: var(--ink);
+}
+.question-options { display: flex; flex-direction: column; gap: 10px; }
+.question-option {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px 4px;
+  font: 400 17px/1.4 var(--font);
+  cursor: pointer;
+}
+.question-option input { flex: none; margin: 3px 0 0; }
+.question-option span { display: block; }
+.question-step .jspsych-survey-likert-opts { margin-top: 20px !important; }
+.intro-panel #intro-paragraph { margin: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .question-step.is-active { animation: none; }
+}
+@media (max-width: 720px) {
+  body:has(.question-sequence) .jspsych-content { padding-top: 72px; }
+  .question-prompt { font-size: 25px; }
+  .question-option { font-size: 16px; }
+}

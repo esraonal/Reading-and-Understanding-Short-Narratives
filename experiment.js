@@ -378,76 +378,180 @@ function shuffleOptions(options) {
   return shuffled;
 }
 
-function makeQuestionTrials(row, q, position, assignment) {
+function makeQuestionTrials(row, q, position, assignment, jsPsych) {
+  // One continuous question screen: show one question at a time and advance
+  // immediately after an answer is selected. No extra Continue buttons.
   const specs = [
-    ['location', row.q_location, notEmpty([q.location_1,q.location_2,q.location_3])],
-    ['impression', row.q_impression, notEmpty([q.impression_1,q.impression_2,q.impression_3,q.impression_4,q.impression_5])],
-    ['access', row.q_access, notEmpty([q.access_1,q.access_2,q.access_3,q.access_4])],
-    ['activity', row.q_activity, notEmpty([q.activity_1,q.activity_2,q.activity_3,q.activity_4])]
+    ['location', row.q_location, notEmpty([q.location_1, q.location_2, q.location_3])],
+    ['impression', row.q_impression, notEmpty([q.impression_1, q.impression_2, q.impression_3, q.impression_4, q.impression_5])],
+    ['access', row.q_access, notEmpty([q.access_1, q.access_2, q.access_3, q.access_4])],
+    ['activity', row.q_activity, notEmpty([q.activity_1, q.activity_2, q.activity_3, q.activity_4])]
   ];
-  // Display unnumbered options in independently randomized order. Save the
-  // original index in a private mapping so the answer keys remain valid.
-  const choiceOrders = new Map();
-  const choiceQuestions = specs.map(([name, prompt, opts], index) => {
-    if (new Set(opts).size !== opts.length)
+
+  // Retain the original CSV positions for correct answer-key scoring.
+  const orders = new Map();
+  const steps = specs.map(([name, prompt, options], index) => {
+    if (new Set(options).size !== options.length)
       throw new Error(`Duplicate answer choice in ${row.item_id}, question ${name}`);
-    const shuffled = shuffleOptions(opts);
-    choiceOrders.set(name, shuffled);
-    return {
-      prompt: `<span class="question-number">${index + 1}.</span> ${esc(prompt)}`,
-      name, options: shuffled.map(o => o.text), required: true
-    };
+    const shuffled = shuffleOptions(options);
+    orders.set(name, shuffled);
+    const optionsHTML = shuffled.map((option, n) =>
+      `<label class="question-option"><input type="radio" name="answer-${name}" ` +
+      `value="${option.sourceIndex}"><span>${esc(option.text)}</span></label>`
+    ).join('');
+    return `<section class="question-step${index === 0 ? ' is-active' : ''}" ` +
+      `data-step="${index}" ${index === 0 ? '' : 'hidden'}>` +
+      `<fieldset class="question-fieldset"><legend class="question-prompt">` +
+      `<span class="question-number">${index + 1}.</span> ${esc(prompt)}</legend>` +
+      `<div class="question-options">${optionsHTML}</div></fieldset></section>`;
   });
-  const mcq = {
-    type: jsPsychSurveyMultiChoice,
-    preamble: `<div class="question-heading">${esc(itemLabel(row, position))} <span>Questions 1–4 of 5 · Answer every question to continue</span></div>`,
-    questions: choiceQuestions,
-    button_label: 'Continue to question 5',
-    data: {...baseData(row, position, assignment), phase: 'questions', question_set: 'multiple_choice'},
-    on_finish: function(data) {
-      const r = data.response;
-      specs.forEach(([name]) => {
-        const displayed = choiceOrders.get(name);
-        const selectedAt = displayed.findIndex(option => option.text === r[name]);
-        // q_*_answer stays 1-based ORIGINAL CSV position, not screen position.
-        data[`q_${name}_answer`] = selectedAt < 0 ? null : displayed[selectedAt].sourceIndex;
-        data[`q_${name}_shown_at`] = selectedAt < 0 ? null : selectedAt + 1;
-        data[`q_${name}_order`] = displayed.map(o => o.sourceIndex).join('-');
-      });
-      // Perceptual attribution is a research measure, not automatically scored.
-      data.q_location_correct = data.q_location_answer === parseKey(q.location_key);
-      data.q_access_correct = data.q_access_answer === parseKey(row.access_key);
-      data.q_activity_correct = data.q_activity_answer === parseKey(q.activity_key);
-      data.q_impression_correct = null;
-    }
-  };
-  const likert = {
-    type: jsPsychSurveyLikert,
-    preamble: `<div class="question-heading">${esc(itemLabel(row, position))} <span>Question 5 of 5 · Response required</span></div>`,
-    questions: [{
-      prompt: `<span class="question-number">5.</span> ${esc(row.q_plausibility)}`, name: 'plausibility',
-      labels: [
-        '<span class="likert-number">1</span><span class="likert-endpoint">Strongly disagree</span>',
-        '<span class="likert-number">2</span>',
-        '<span class="likert-number">3</span>',
-        '<span class="likert-number">4</span>',
-        '<span class="likert-number">5</span><span class="likert-endpoint">Strongly agree</span>'
-      ],
-      required: true
-    }],
-    scale_width: null,
-    button_label: 'Next narrative',
+
+  const scale = [1, 2, 3, 4, 5].map(value => {
+    const endpoint = value === 1
+      ? '<span class="likert-endpoint">Strongly disagree</span>'
+      : value === 5
+        ? '<span class="likert-endpoint">Strongly agree</span>'
+        : '';
+    return `<li><input type="radio" id="question-rating-${value}" ` +
+      `name="answer-plausibility" value="${value}">` +
+      `<label for="question-rating-${value}">` +
+      `<span class="likert-number">${value}</span>${endpoint}</label></li>`;
+  }).join('');
+
+  steps.push(
+    `<section class="question-step" data-step="4" hidden>` +
+    `<fieldset class="question-fieldset"><legend class="question-prompt">` +
+    `<span class="question-number">5.</span> ${esc(row.q_plausibility)}</legend>` +
+    `<ul class="jspsych-survey-likert-opts">${scale}</ul></fieldset></section>`
+  );
+
+  return [{
+    type: jsPsychHtmlKeyboardResponse,
+    choices: 'NO_KEYS',
+    stimulus: `<div id="question-sequence" class="question-sequence">` +
+      `<div class="question-heading">${esc(itemLabel(row, position))} ` +
+      `<span id="question-progress">Question 1 of 5 · Select an answer to continue</span></div>` +
+      `<div class="question-stage">${steps.join('')}</div></div>`,
     data: {
-      ...baseData(row, position, assignment), phase: 'questions', question_set: 'plausibility',
+      ...baseData(row, position, assignment),
+      phase: 'questions', question_set: 'all_five_sequential',
       plaus_type: q.plaus_type
     },
-    on_finish: function(data) {
-      // jsPsych survey-likert indices are zero-based; analysis scores are 1..5.
-      const index = data.response?.plausibility;
-      data.q_plausibility_rating = Number.isInteger(index) ? index + 1 : null;
+    on_load: () => {
+      const container = document.getElementById('question-sequence');
+      const progress = document.getElementById('question-progress');
+      let current = 0;
+      let startedAt = performance.now();
+      let finished = false;
+      const answers = {};
+      const questionRTs = {};
+
+      function handleAnswer(event) {
+        const input = event.target;
+        if (!input.matches('input[type="radio"]') || finished) return;
+        const step = input.closest('.question-step');
+        if (!step || Number(step.dataset.step) !== current) return;
+        const name = current < 4 ? specs[current][0] : 'plausibility';
+        answers[name] = Number(input.value);
+        questionRTs[name] = Math.round(performance.now() - startedAt);
+
+        if (current === 4) {
+          finished = true;
+          container.removeEventListener('change', handleAnswer);
+          const recorded = {
+            // Responses are now stored together in one question record.
+            response: {},
+            q_plausibility_rating: answers.plausibility,
+            q_plausibility_index: answers.plausibility - 1,
+            q_plausibility_rt: questionRTs.plausibility,
+            q_impression_correct: null
+          };
+          for (const [key] of specs) {
+            const displayed = orders.get(key);
+            const sourceIndex = answers[key];
+            const displayedIndex = displayed.findIndex(x => x.sourceIndex === sourceIndex);
+            recorded[`q_${key}_answer`] = sourceIndex;
+            recorded[`q_${key}_shown_at`] = displayedIndex + 1;
+            recorded[`q_${key}_order`] = displayed.map(x => x.sourceIndex).join('-');
+            recorded[`q_${key}_rt`] = questionRTs[key];
+            recorded.response[key] = displayed[displayedIndex].text;
+          }
+          recorded.response.plausibility = answers.plausibility - 1;
+          recorded.q_location_correct = answers.location === parseKey(q.location_key);
+          recorded.q_access_correct = answers.access === parseKey(row.access_key);
+          recorded.q_activity_correct = answers.activity === parseKey(q.activity_key);
+          // Let the final selection be visible before leaving the page.
+          requestAnimationFrame(() => jsPsych.finishTrial(recorded));
+          return;
+        }
+
+        step.hidden = true;
+        step.classList.remove('is-active');
+        current += 1;
+        const next = container.querySelector(`.question-step[data-step="${current}"]`);
+        next.hidden = false;
+        next.classList.add('is-active');
+        progress.textContent = `Question ${current + 1} of 5 · Select an answer to continue`;
+        startedAt = performance.now();
+      }
+      container.addEventListener('change', handleAnswer);
+    }
+  }];
+}
+
+function makeIntroTrial() {
+  // Present the instructions one paragraph at a time in the same panel.
+  // Space moves to the next paragraph; the Start practice button appears last.
+  const paragraphs = [
+    'In this experiment, you will read 36 short narratives.',
+    'Before beginning the main task, you will complete one required practice narrative. ' +
+      'Afterward, you can choose to repeat the practice or begin the experiment.',
+    'Each narrative consists of four sentences. Press <kbd>Space</kbd> to reveal each new sentence. ' +
+      'The most recent sentence will appear in bold, while the previous sentences remain visible.',
+    '<strong>Partway through the fourth sentence, the reading format will change to ' +
+      'word-by-word reading.</strong> The previous sentences will disappear, and three dashes ' +
+      '(---) will represent each hidden word. Press <kbd>Space</kbd> to reveal each word in sequence.',
+    'After each narrative, you will answer five questions, one at a time. ' +
+      'Select an answer to move automatically to the next question.',
+    'Please read each narrative naturally and at a comfortable pace. ' +
+      'Pay attention to what you read, as you will answer questions afterward.'
+  ];
+  let keyHandler = null;
+  return {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<div class="reading-panel intro-panel">` +
+      `<div class="reading-text"><p id="intro-paragraph">${paragraphs[0]}</p></div>` +
+      `<div class="reading-instructions" id="intro-progress">` +
+      `Press <kbd>Space</kbd> for the next paragraph (1 of ${paragraphs.length})</div></div>`,
+    choices: ['Start practice'],
+    record_data: false,
+    on_load: () => {
+      const paragraph = document.getElementById('intro-paragraph');
+      const progress = document.getElementById('intro-progress');
+      const buttonGroup = document.getElementById('jspsych-html-button-response-btngroup');
+      let index = 0;
+      // This overrides the existing !important display rule for button groups.
+      if (buttonGroup) buttonGroup.style.setProperty('display', 'none', 'important');
+      keyHandler = event => {
+        if (event.code !== 'Space' || event.repeat || index >= paragraphs.length - 1) return;
+        event.preventDefault();
+        index += 1;
+        paragraph.innerHTML = paragraphs[index];
+        if (index === paragraphs.length - 1) {
+          progress.textContent = 'You have finished the instructions. Select Start practice to continue.';
+          if (buttonGroup) buttonGroup.style.removeProperty('display');
+          document.removeEventListener('keydown', keyHandler);
+          keyHandler = null;
+        } else {
+          progress.innerHTML = `Press <kbd>Space</kbd> for the next paragraph (${index + 1} of ${paragraphs.length})`;
+        }
+      };
+      document.addEventListener('keydown', keyHandler);
+    },
+    on_finish: () => {
+      if (keyHandler) document.removeEventListener('keydown', keyHandler);
     }
   };
-  return [mcq, likert];
 }
 
 function makeTextTrial(html) {
@@ -502,39 +606,7 @@ async function launch() {
     const selected = selectList(rows, assignment.list);
     const ordered = jsPsych.randomization.shuffle(selected);
     const timeline = [];
-    timeline.push({
-      type: jsPsychHtmlButtonResponse,
-      stimulus: `
-        <div class="reading-panel">
-          <div class="reading-text">
-            <p>In this experiment, you will read 36 short narratives.</p>
-            
-            <p>Before beginning the main task, you will complete one required
-            practice narrative. Afterward, you can choose to repeat the
-            practice or begin the experiment.</p>
-
-            <p>Each narrative consists of four sentences.
-            Press <kbd>Space</kbd> to reveal each new sentence.
-            The most recent sentence will appear in bold, while the
-            previous sentences remain visible.</p>
-
-            <p><strong>Partway through the fourth sentence, 
-            the reading format will change to word-by-word reading.</strong>
-            The previous sentences will disappear, and three dashes
-            (---) will represent each hidden word.
-            Press <kbd>Space</kbd> to reveal each word in sequence.</p>
-
-            <p>After each narrative, you will answer five questions.</p>
-
-            <p>Please read each narrative naturally and at a comfortable
-            pace. Pay attention to what you read, as you will answer
-            questions afterward.</p>
-          </div>
-        </div>
-      `,
-      choices: ['Start practice'],
-      record_data: false
-    });
+    timeline.push(makeIntroTrial());
     if (NUM_PRACTICE > 0) {
       const practice = PRACTICE_STORIES[0];
       let practiceAttempt = 0;
@@ -566,7 +638,7 @@ async function launch() {
           },
           ...makeContextTrials(practice.row, 1, assignment, true).map(annotatePracticeAttempt),
           ...makeWordTrials(practice.row, 1, assignment).map(annotatePracticeAttempt),
-          ...makeQuestionTrials(practice.row, practice.options, 1, assignment).map(annotatePracticeAttempt)
+          ...makeQuestionTrials(practice.row, practice.options, 1, assignment, jsPsych).map(annotatePracticeAttempt)
         ];
       }
       let repeatPractice = false;
@@ -600,7 +672,7 @@ async function launch() {
         choices:'NO_KEYS', trial_duration:CONFIG.fixationMs, record_data:false});
       timeline.push(...makeContextTrials(row, position, assignment, false));
       timeline.push(...makeWordTrials(row, position, assignment));
-      if (CONFIG.includeQuestions) timeline.push(...makeQuestionTrials(row, qMap.get(row.item_id), position, assignment));
+      if (CONFIG.includeQuestions) timeline.push(...makeQuestionTrials(row, qMap.get(row.item_id), position, assignment, jsPsych));
       if (CONFIG.breakAfterItems.includes(position) && position < NUM_ITEMS) {
         timeline.push(makeTextTrial(`You have completed ${position} of ${NUM_ITEMS} narratives. ` +
           'You may take a short break before continuing.'));
