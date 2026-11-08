@@ -248,6 +248,13 @@ function splitAtAnd(row) {
 }
 
 
+// Gate only whole-sentence Space presses. A minimum of 180 ms per word,
+// bounded to 1.5–6 seconds, discourages skipping without imposing a deadline.
+// The critical word-by-word trials remain fully self-paced and unchanged.
+function minimumSentenceMs(text) {
+  return Math.max(1500, Math.min(6000, words(text).length * 180));
+}
+
 function makeContextTrials(row, position, assignment, showInstructions = false) {
   // Practice uses a self-contained ordinary story, not the experimental
   // setup/activity/access/event-and template.
@@ -269,12 +276,14 @@ function makeContextTrials(row, position, assignment, showInstructions = false) 
     `<p class="context-sentence${n === segments.length - 1 ? ' context-current' : ''}">${esc(sentence.trim())}</p>`
   ).join('');
 
-  return segments.map(([sentenceName], i) => {
+  return segments.map(([sentenceName, sentence], i) => {
+    const minDisplayMs = minimumSentenceMs(sentence);
     const visible = segments.slice(0, i + 1).map(([, sentence], n) =>
       `<p class="context-sentence${n === i ? ' context-current' : ''}">${esc(sentence.trim())}</p>`
     ).join('');
 
     const last = i === segments.length - 1;
+    let spaceGate = null;
 
     // Display Space-key reminders only when requested (e.g., during practice).
     const instruction = showInstructions
@@ -311,6 +320,23 @@ function makeContextTrials(row, position, assignment, showInstructions = false) 
             body.getBoundingClientRect().bottom;
           if (overflow > 0) body.scrollTop += overflow + 12;
         }
+
+        // Capture Space before jsPsych's keyboard listener can accept it.
+        // Early or held-down presses are ignored; the participant must press
+        // again after the minimum time. This does not affect word trials.
+        const appearedAt = performance.now();
+        spaceGate = event => {
+          if ((event.code === 'Space' || event.key === ' ') &&
+              (event.repeat || performance.now() - appearedAt < minDisplayMs)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        };
+        window.addEventListener('keydown', spaceGate, true);
+      },
+      on_finish: () => {
+        if (spaceGate) window.removeEventListener('keydown', spaceGate, true);
+        spaceGate = null;
       },
 
       data: {
@@ -318,7 +344,8 @@ function makeContextTrials(row, position, assignment, showInstructions = false) 
         phase: 'sentence',
         sentence: sentenceName,
         cumulative: true,
-        visible_sentence_count: i + 1
+        visible_sentence_count: i + 1,
+        min_sentence_display_ms: minDisplayMs
       }
     };
   });
@@ -627,6 +654,7 @@ function makeIntroTrial() {
     'Before beginning the main task, you will complete one required practice narrative. ' +
       'Afterward, you can choose to repeat the practice or begin the experiment.',
     'Each narrative consists of four sentences. Press <kbd>Space</kbd> to reveal each new sentence. ' +
+      'Space becomes available after a brief minimum reading time. ' +
       'The most recent sentence will appear in bold, while the previous sentences remain visible.',
     '<strong>Partway through the fourth sentence, the reading format will change to ' +
       'word-by-word reading.</strong> The previous sentences will disappear, and three dashes ' +
@@ -802,9 +830,10 @@ async function launch() {
       timeline.push(...makeContextTrials(row, position, assignment, false));
       timeline.push(...makeWordTrials(row, position, assignment));
       if (CONFIG.includeQuestions) timeline.push(...makeQuestionTrials(row, qMap.get(row.item_id), position, assignment, jsPsych));
-      if (CONFIG.breakAfterItems.includes(position) && position < NUM_ITEMS) {
-        timeline.push(makeTextTrial(`You have completed ${position} of ${NUM_ITEMS} narratives. ` +
-          'You may take a short break before continuing.'));
+      if ([9, 18, 27].includes(position)) {
+        timeline.push(makeTextTrial(`Break ${position / 9} of 3. ` +
+          `You have completed ${position} of ${NUM_ITEMS} narratives. ` +
+          'You may take a break for as long as you need before continuing.'));
       }
     }
     timeline.push({
