@@ -372,7 +372,7 @@ body:has(.question-sequence) .jspsych-content {
   align-items: center;
   padding: 18px 0 42px;
 }
-.question-step { width: 100%; }
+.question-step { width: min(100%, 880px); margin-inline: auto; }
 .question-step[hidden] { display: none !important; }
 .question-step.is-active { animation: question-slide-in 180ms ease-out; }
 @keyframes question-slide-in {
@@ -387,15 +387,15 @@ body:has(.question-sequence) .jspsych-content {
   margin: 0 0 24px;
   font: 400 28px/1.45 var(--font);
   color: var(--ink);
-  text-align: center;
+  text-align: left;
 }
 .question-options {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: max-content;
+  width: 100%;
   max-width: 100%;
-  margin-inline: auto;
+  margin-inline: 0;
 }
 .question-option {
   display: flex;
@@ -404,7 +404,7 @@ body:has(.question-sequence) .jspsych-content {
   width: fit-content;
   max-width: 100%;
   padding: 8px 4px;
-  font: 400 17px/1.4 var(--font);
+  font: 400 25px/1.4 var(--font);
   cursor: pointer;
 }
 .question-option input { flex: none; margin: 3px 0 0; }
@@ -417,7 +417,7 @@ body:has(.question-sequence) .jspsych-content {
 @media (max-width: 720px) {
   body:has(.question-sequence) .jspsych-content { padding-top: 0; }
   .question-prompt { font-size: 28px; }
-  .question-option { font-size: 16px; }
+  .question-option { font-size: 25px; }
 }
 
 /* Intro only: accumulate instructions in a stationary narrative-style window. */
